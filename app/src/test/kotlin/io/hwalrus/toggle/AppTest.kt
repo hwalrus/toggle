@@ -7,6 +7,7 @@ import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
+import org.http4k.core.Status.Companion.CREATED
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.format.Jackson
@@ -46,6 +47,12 @@ class AppTest : DescribeSpec({
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
             Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
+        }
+
+        it("returns 201 Created with a Location header") {
+            val response = handler(Request(POST, "/toggle/myFeature?enabled=true"))
+            response.status shouldBe CREATED
+            response.header("Location") shouldBe "/toggle/myFeature"
         }
 
         it("adds a toggle and returns its enabled state") {

@@ -4,9 +4,12 @@ import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.CREATED
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Uri
 import org.http4k.core.with
+import org.http4k.lens.Header.LOCATION
 import org.http4k.format.Jackson.autoBody
 import org.http4k.lens.Path
 import org.http4k.lens.Query
@@ -32,8 +35,9 @@ fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
         Response(OK).with(allTogglesBody of store.getAll())
     },
     "/{name}" bind POST to { req ->
-        store.add(toggleName(req), toggleEnabled(req))
-        Response(OK)
+        val name = toggleName(req)
+        store.add(name, toggleEnabled(req))
+        Response(CREATED).with(LOCATION of Uri.of("/toggle/$name"))
     },
     "/{name}" bind GET to { req ->
         Response(OK).with(toggleStateBody of ToggleState(store.isEnabled(toggleName(req))))

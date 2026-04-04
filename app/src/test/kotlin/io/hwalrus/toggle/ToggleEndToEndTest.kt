@@ -36,8 +36,15 @@ class ToggleEndToEndTest : DescribeSpec({
     }
 
     describe("POST /toggle/{name}") {
+        it("returns 201 Created with a Location header") {
+            post("/toggle/e2e-add-location?enabled=true").use { response ->
+                response.code shouldBe 201
+                response.header("Location") shouldBe "/toggle/e2e-add-location"
+            }
+        }
+
         it("adds an enabled toggle") {
-            post("/toggle/e2e-add-enabled?enabled=true").use { it.code shouldBe 200 }
+            post("/toggle/e2e-add-enabled?enabled=true").use { it.code shouldBe 201 }
             get("/toggle/e2e-add-enabled").use { response ->
                 response.code shouldBe 200
                 Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
@@ -45,7 +52,7 @@ class ToggleEndToEndTest : DescribeSpec({
         }
 
         it("adds a disabled toggle") {
-            post("/toggle/e2e-add-disabled?enabled=false").use { it.code shouldBe 200 }
+            post("/toggle/e2e-add-disabled?enabled=false").use { it.code shouldBe 201 }
             get("/toggle/e2e-add-disabled").use { response ->
                 response.code shouldBe 200
                 Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
@@ -64,7 +71,7 @@ class ToggleEndToEndTest : DescribeSpec({
 
     describe("POST /toggle/{name}/enable") {
         it("enables a disabled toggle") {
-            post("/toggle/e2e-enable?enabled=false").use { it.code shouldBe 200 }
+            post("/toggle/e2e-enable?enabled=false").use { it.code shouldBe 201 }
             post("/toggle/e2e-enable/enable").use { it.code shouldBe 200 }
             get("/toggle/e2e-enable").use { response ->
                 Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
@@ -78,7 +85,7 @@ class ToggleEndToEndTest : DescribeSpec({
 
     describe("POST /toggle/{name}/disable") {
         it("disables an enabled toggle") {
-            post("/toggle/e2e-disable?enabled=true").use { it.code shouldBe 200 }
+            post("/toggle/e2e-disable?enabled=true").use { it.code shouldBe 201 }
             post("/toggle/e2e-disable/disable").use { it.code shouldBe 200 }
             get("/toggle/e2e-disable").use { response ->
                 Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
@@ -92,7 +99,7 @@ class ToggleEndToEndTest : DescribeSpec({
 
     describe("DELETE /toggle/{name}") {
         it("deletes an existing toggle") {
-            post("/toggle/e2e-delete?enabled=true").use { it.code shouldBe 200 }
+            post("/toggle/e2e-delete?enabled=true").use { it.code shouldBe 201 }
             delete("/toggle/e2e-delete").use { it.code shouldBe 200 }
             delete("/toggle/e2e-delete").use { it.code shouldBe 404 }
         }
@@ -104,8 +111,8 @@ class ToggleEndToEndTest : DescribeSpec({
 
     describe("GET /toggle (all)") {
         it("returns all toggles") {
-            post("/toggle/e2e-all-a?enabled=true").use { it.code shouldBe 200 }
-            post("/toggle/e2e-all-b?enabled=false").use { it.code shouldBe 200 }
+            post("/toggle/e2e-all-a?enabled=true").use { it.code shouldBe 201 }
+            post("/toggle/e2e-all-b?enabled=false").use { it.code shouldBe 201 }
             get("/toggle").use { response ->
                 val body = Jackson.parse(checkNotNull(response.body).string())
                 body["e2e-all-a"].booleanValue() shouldBe true
