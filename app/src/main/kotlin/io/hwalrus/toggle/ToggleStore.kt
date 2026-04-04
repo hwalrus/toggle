@@ -10,4 +10,5 @@ interface ToggleStore {
     fun isEnabled(name: String): Boolean
     fun enable(name: String): UpdateResult
     fun disable(name: String): UpdateResult
+    fun delete(name: String): UpdateResult
 }

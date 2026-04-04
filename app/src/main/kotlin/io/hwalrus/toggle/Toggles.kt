@@ -1,5 +1,6 @@
 package io.hwalrus.toggle
 
+import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
@@ -33,5 +34,8 @@ fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
     },
     "/{name}/disable" bind POST to { req ->
         store.disable(toggleName(req)).toResponse()
+    },
+    "/{name}" bind DELETE to { req ->
+        store.delete(toggleName(req)).toResponse()
     }
 )

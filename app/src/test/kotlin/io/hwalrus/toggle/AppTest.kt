@@ -2,6 +2,7 @@ package io.hwalrus.toggle
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
@@ -54,6 +55,20 @@ class AppTest : DescribeSpec({
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
             response.bodyString() shouldBe "true"
+        }
+    }
+
+    describe("DELETE /toggle/{name}") {
+        it("returns 404 when the toggle does not exist") {
+            val response = app()(Request(DELETE, "/toggle/myFeature"))
+            response.status shouldBe NOT_FOUND
+        }
+
+        it("deletes an existing toggle") {
+            val handler = app()
+            handler(Request(POST, "/toggle/myFeature?enabled=true"))
+            handler(Request(DELETE, "/toggle/myFeature")).status shouldBe OK
+            handler(Request(DELETE, "/toggle/myFeature")).status shouldBe NOT_FOUND
         }
     }
 

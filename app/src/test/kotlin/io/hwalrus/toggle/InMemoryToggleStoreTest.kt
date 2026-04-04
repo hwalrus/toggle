@@ -67,6 +67,34 @@ class InMemoryToggleStoreTest : DescribeSpec({
             }
         }
 
+        describe("delete") {
+            it("returns NotFound for an unknown toggle") {
+                InMemoryToggleStore().delete("unknown") shouldBe UpdateResult.NotFound
+            }
+
+            it("returns Updated and removes an existing toggle") {
+                val store = InMemoryToggleStore()
+                store.add("feature", true)
+                store.delete("feature") shouldBe UpdateResult.Updated
+                store.isEnabled("feature") shouldBe false
+            }
+
+            it("toggle is no longer accessible after deletion") {
+                val store = InMemoryToggleStore()
+                store.add("feature", true)
+                store.delete("feature")
+                store.delete("feature") shouldBe UpdateResult.NotFound
+            }
+
+            it("deleting one toggle does not affect others") {
+                val store = InMemoryToggleStore()
+                store.add("a", true)
+                store.add("b", true)
+                store.delete("a")
+                store.isEnabled("b") shouldBe true
+            }
+        }
+
         describe("disable") {
             it("returns NotFound for an unknown toggle") {
                 InMemoryToggleStore().disable("unknown") shouldBe UpdateResult.NotFound

@@ -15,6 +15,11 @@ class InMemoryToggleStore : ToggleStore {
 
     override fun disable(name: String): UpdateResult = update(name, false)
 
+    override fun delete(name: String): UpdateResult {
+        val toggleExists = name in store.getAndUpdate { snapshot -> snapshot - name }
+        return if (toggleExists) UpdateResult.Updated else UpdateResult.NotFound
+    }
+
     private fun update(name: String, enabled: Boolean): UpdateResult {
         val toggleExists = name in store.getAndUpdate { snapshot ->
             if (name in snapshot) snapshot + (name to enabled) else snapshot
