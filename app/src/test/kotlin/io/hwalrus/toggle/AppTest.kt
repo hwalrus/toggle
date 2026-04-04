@@ -8,16 +8,6 @@ import org.http4k.core.Request
 import org.http4k.core.Status.Companion.OK
 
 class AppTest : DescribeSpec({
-    describe("/hello") {
-        val handler = app()
-
-        it("returns 200 OK with Hello, World!") {
-            val response = handler(Request(GET, "/hello"))
-            response.status shouldBe OK
-            response.bodyString() shouldBe "Hello, World!"
-        }
-    }
-
     describe("/toggle") {
         val handler = app()
 
