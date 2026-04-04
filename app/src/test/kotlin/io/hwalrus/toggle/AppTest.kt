@@ -40,21 +40,20 @@ class AppTest : DescribeSpec({
         }
     }
 
-    describe("/toggle") {
-        val handler = app()
-
+    describe("/toggle/{name}") {
         it("returns 404 for an unknown toggle") {
-            val response = handler(Request(GET, "/toggle/myFeature"))
+            val response = app()(Request(GET, "/toggle/myFeature"))
             response.status shouldBe NOT_FOUND
         }
 
         it("returns 201 Created with a Location header") {
-            val response = handler(Request(POST, "/toggle/myFeature?enabled=true"))
+            val response = app()(Request(POST, "/toggle/myFeature?enabled=true"))
             response.status shouldBe CREATED
             response.header("Location") shouldBe "/toggle/myFeature"
         }
 
         it("adds a toggle and returns its enabled state") {
+            val handler = app()
             handler(Request(POST, "/toggle/myFeature?enabled=true"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
@@ -62,6 +61,7 @@ class AppTest : DescribeSpec({
         }
 
         it("adds a disabled toggle and returns false") {
+            val handler = app()
             handler(Request(POST, "/toggle/myFeature?enabled=false"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
@@ -69,6 +69,7 @@ class AppTest : DescribeSpec({
         }
 
         it("overwriting a toggle reflects the latest value") {
+            val handler = app()
             handler(Request(POST, "/toggle/myFeature?enabled=true"))
             handler(Request(POST, "/toggle/myFeature?enabled=false"))
             val response = handler(Request(GET, "/toggle/myFeature"))

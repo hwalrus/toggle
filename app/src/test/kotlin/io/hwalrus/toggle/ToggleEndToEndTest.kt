@@ -11,111 +11,136 @@ import org.http4k.server.Netty
 import org.http4k.server.asServer
 
 class ToggleEndToEndTest : DescribeSpec({
-    val server = autoClose(app().asServer(Netty(0)).start())
     val client = OkHttpClient()
-    val baseUrl = "http://localhost:${server.port()}"
 
     afterSpec { client.dispatcher.executorService.shutdown() }
 
-    fun get(path: String): Response =
+    fun withServer(block: (String) -> Unit) =
+        app().asServer(Netty(0)).start().use { server ->
+            block("http://localhost:${server.port()}")
+        }
+
+    fun get(baseUrl: String, path: String): Response =
         client.newCall(Request.Builder().url("$baseUrl$path").get().build()).execute()
 
-    fun post(path: String): Response =
+    fun post(baseUrl: String, path: String): Response =
         client.newCall(Request.Builder().url("$baseUrl$path").post("".toRequestBody()).build()).execute()
 
-    fun delete(path: String): Response =
+    fun delete(baseUrl: String, path: String): Response =
         client.newCall(Request.Builder().url("$baseUrl$path").delete().build()).execute()
 
     describe("GET /toggle") {
         it("returns an empty JSON object when no toggles exist") {
-            get("/toggle").use { response ->
-                response.code shouldBe 200
-                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("{}")
+            withServer { baseUrl ->
+                get(baseUrl, "/toggle").use { response ->
+                    response.code shouldBe 200
+                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("{}")
+                }
             }
         }
     }
 
     describe("POST /toggle/{name}") {
         it("returns 201 Created with a Location header") {
-            post("/toggle/e2e-add-location?enabled=true").use { response ->
-                response.code shouldBe 201
-                response.header("Location") shouldBe "/toggle/e2e-add-location"
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature?enabled=true").use { response ->
+                    response.code shouldBe 201
+                    response.header("Location") shouldBe "/toggle/feature"
+                }
             }
         }
 
         it("adds an enabled toggle") {
-            post("/toggle/e2e-add-enabled?enabled=true").use { it.code shouldBe 201 }
-            get("/toggle/e2e-add-enabled").use { response ->
-                response.code shouldBe 200
-                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature?enabled=true").use { it.code shouldBe 201 }
+                get(baseUrl, "/toggle/feature").use { response ->
+                    response.code shouldBe 200
+                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
+                }
             }
         }
 
         it("adds a disabled toggle") {
-            post("/toggle/e2e-add-disabled?enabled=false").use { it.code shouldBe 201 }
-            get("/toggle/e2e-add-disabled").use { response ->
-                response.code shouldBe 200
-                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature?enabled=false").use { it.code shouldBe 201 }
+                get(baseUrl, "/toggle/feature").use { response ->
+                    response.code shouldBe 200
+                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+                }
             }
         }
     }
 
     describe("GET /toggle/{name}") {
         it("returns 404 for an unknown toggle") {
-            get("/toggle/e2e-unknown").use { response ->
-                response.code shouldBe 404
+            withServer { baseUrl ->
+                get(baseUrl, "/toggle/feature").use { response ->
+                    response.code shouldBe 404
+                }
             }
         }
     }
 
     describe("POST /toggle/{name}/enable") {
         it("enables a disabled toggle") {
-            post("/toggle/e2e-enable?enabled=false").use { it.code shouldBe 201 }
-            post("/toggle/e2e-enable/enable").use { it.code shouldBe 200 }
-            get("/toggle/e2e-enable").use { response ->
-                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature?enabled=false").use { it.code shouldBe 201 }
+                post(baseUrl, "/toggle/feature/enable").use { it.code shouldBe 200 }
+                get(baseUrl, "/toggle/feature").use { response ->
+                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
+                }
             }
         }
 
         it("returns 404 for an unknown toggle") {
-            post("/toggle/e2e-enable-unknown/enable").use { it.code shouldBe 404 }
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature/enable").use { it.code shouldBe 404 }
+            }
         }
     }
 
     describe("POST /toggle/{name}/disable") {
         it("disables an enabled toggle") {
-            post("/toggle/e2e-disable?enabled=true").use { it.code shouldBe 201 }
-            post("/toggle/e2e-disable/disable").use { it.code shouldBe 200 }
-            get("/toggle/e2e-disable").use { response ->
-                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature?enabled=true").use { it.code shouldBe 201 }
+                post(baseUrl, "/toggle/feature/disable").use { it.code shouldBe 200 }
+                get(baseUrl, "/toggle/feature").use { response ->
+                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+                }
             }
         }
 
         it("returns 404 for an unknown toggle") {
-            post("/toggle/e2e-disable-unknown/disable").use { it.code shouldBe 404 }
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature/disable").use { it.code shouldBe 404 }
+            }
         }
     }
 
     describe("DELETE /toggle/{name}") {
         it("deletes an existing toggle") {
-            post("/toggle/e2e-delete?enabled=true").use { it.code shouldBe 201 }
-            delete("/toggle/e2e-delete").use { it.code shouldBe 200 }
-            delete("/toggle/e2e-delete").use { it.code shouldBe 404 }
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/feature?enabled=true").use { it.code shouldBe 201 }
+                delete(baseUrl, "/toggle/feature").use { it.code shouldBe 200 }
+                delete(baseUrl, "/toggle/feature").use { it.code shouldBe 404 }
+            }
         }
 
         it("returns 404 for an unknown toggle") {
-            delete("/toggle/e2e-delete-unknown").use { it.code shouldBe 404 }
+            withServer { baseUrl ->
+                delete(baseUrl, "/toggle/feature").use { it.code shouldBe 404 }
+            }
         }
     }
 
     describe("GET /toggle (all)") {
         it("returns all toggles") {
-            post("/toggle/e2e-all-a?enabled=true").use { it.code shouldBe 201 }
-            post("/toggle/e2e-all-b?enabled=false").use { it.code shouldBe 201 }
-            get("/toggle").use { response ->
-                val body = Jackson.parse(checkNotNull(response.body).string())
-                body["e2e-all-a"].booleanValue() shouldBe true
-                body["e2e-all-b"].booleanValue() shouldBe false
+            withServer { baseUrl ->
+                post(baseUrl, "/toggle/a?enabled=true").use { it.code shouldBe 201 }
+                post(baseUrl, "/toggle/b?enabled=false").use { it.code shouldBe 201 }
+                get(baseUrl, "/toggle").use { response ->
+                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"a":true,"b":false}""")
+                }
             }
         }
     }
