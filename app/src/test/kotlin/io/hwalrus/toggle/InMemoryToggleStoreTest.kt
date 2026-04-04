@@ -46,5 +46,45 @@ class InMemoryToggleStoreTest : DescribeSpec({
                 store.isEnabled("b") shouldBe false
             }
         }
+
+        describe("enable") {
+            it("returns NotFound for an unknown toggle") {
+                InMemoryToggleStore().enable("unknown") shouldBe UpdateResult.NotFound
+            }
+
+            it("returns Updated and enables a disabled toggle") {
+                val store = InMemoryToggleStore()
+                store.add("feature", false)
+                store.enable("feature") shouldBe UpdateResult.Updated
+                store.isEnabled("feature") shouldBe true
+            }
+
+            it("returns Updated when toggle is already enabled") {
+                val store = InMemoryToggleStore()
+                store.add("feature", true)
+                store.enable("feature") shouldBe UpdateResult.Updated
+                store.isEnabled("feature") shouldBe true
+            }
+        }
+
+        describe("disable") {
+            it("returns NotFound for an unknown toggle") {
+                InMemoryToggleStore().disable("unknown") shouldBe UpdateResult.NotFound
+            }
+
+            it("returns Updated and disables an enabled toggle") {
+                val store = InMemoryToggleStore()
+                store.add("feature", true)
+                store.disable("feature") shouldBe UpdateResult.Updated
+                store.isEnabled("feature") shouldBe false
+            }
+
+            it("returns Updated when toggle is already disabled") {
+                val store = InMemoryToggleStore()
+                store.add("feature", false)
+                store.disable("feature") shouldBe UpdateResult.Updated
+                store.isEnabled("feature") shouldBe false
+            }
+        }
     }
 })
