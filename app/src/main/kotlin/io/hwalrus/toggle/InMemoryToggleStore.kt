@@ -11,6 +11,8 @@ class InMemoryToggleStore : ToggleStore {
 
     override fun isEnabled(name: String): Boolean = store.get().getOrDefault(name, false)
 
+    override fun getAll(): Map<String, Boolean> = store.get()
+
     override fun enable(name: String): UpdateResult = update(name, true)
 
     override fun disable(name: String): UpdateResult = update(name, false)

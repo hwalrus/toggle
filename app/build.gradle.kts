@@ -9,6 +9,7 @@ repositories {
 
 dependencies {
     implementation(libs.http4k.core)
+    implementation(libs.http4k.format.jackson)
     implementation(libs.http4k.server.netty)
 
     testImplementation(libs.kotest.runner.junit5)

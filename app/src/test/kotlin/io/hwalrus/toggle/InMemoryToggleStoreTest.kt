@@ -5,6 +5,34 @@ import io.kotest.matchers.shouldBe
 
 class InMemoryToggleStoreTest : DescribeSpec({
     describe("InMemoryToggleStore") {
+        describe("getAll") {
+            it("returns an empty map when no toggles exist") {
+                InMemoryToggleStore().getAll() shouldBe emptyMap()
+            }
+
+            it("returns all added toggles") {
+                val store = InMemoryToggleStore()
+                store.add("a", true)
+                store.add("b", false)
+                store.getAll() shouldBe mapOf("a" to true, "b" to false)
+            }
+
+            it("reflects the latest state after updates") {
+                val store = InMemoryToggleStore()
+                store.add("a", true)
+                store.disable("a")
+                store.getAll() shouldBe mapOf("a" to false)
+            }
+
+            it("does not include deleted toggles") {
+                val store = InMemoryToggleStore()
+                store.add("a", true)
+                store.add("b", false)
+                store.delete("a")
+                store.getAll() shouldBe mapOf("b" to false)
+            }
+        }
+
         describe("isEnabled") {
             it("returns false for an unknown toggle") {
                 InMemoryToggleStore().isEnabled("unknown") shouldBe false

@@ -8,6 +8,7 @@ sealed class UpdateResult {
 interface ToggleStore {
     fun add(name: String, enabled: Boolean)
     fun isEnabled(name: String): Boolean
+    fun getAll(): Map<String, Boolean>
     fun enable(name: String): UpdateResult
     fun disable(name: String): UpdateResult
     fun delete(name: String): UpdateResult
