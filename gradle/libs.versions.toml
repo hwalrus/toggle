@@ -1,6 +1,7 @@
 [versions]
 http4k = "6.18.0.1"
 kotest = "6.1.4"
+kotlin = "2.3.20"
 
 [libraries]
 http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4k" }
@@ -9,4 +10,4 @@ kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref 
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.3.0" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

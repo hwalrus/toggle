@@ -15,10 +15,8 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
+kotlin {
+    jvmToolchain(25)
 }
 
 application {
