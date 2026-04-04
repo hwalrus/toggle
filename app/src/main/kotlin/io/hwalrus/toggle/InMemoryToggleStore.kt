@@ -13,19 +13,19 @@ class InMemoryToggleStore : ToggleStore {
 
     override fun getAll(): Map<String, Boolean> = store.get()
 
-    override fun enable(name: String): UpdateResult = update(name, true)
+    override fun enable(name: String): StoreResult = update(name, true)
 
-    override fun disable(name: String): UpdateResult = update(name, false)
+    override fun disable(name: String): StoreResult = update(name, false)
 
-    override fun delete(name: String): UpdateResult {
+    override fun delete(name: String): StoreResult {
         val toggleExists = name in store.getAndUpdate { snapshot -> snapshot - name }
-        return if (toggleExists) UpdateResult.Updated else UpdateResult.NotFound
+        return if (toggleExists) StoreResult.Success else StoreResult.NotFound
     }
 
-    private fun update(name: String, enabled: Boolean): UpdateResult {
+    private fun update(name: String, enabled: Boolean): StoreResult {
         val toggleExists = name in store.getAndUpdate { snapshot ->
             if (name in snapshot) snapshot + (name to enabled) else snapshot
         }
-        return if (toggleExists) UpdateResult.Updated else UpdateResult.NotFound
+        return if (toggleExists) StoreResult.Success else StoreResult.NotFound
     }
 }

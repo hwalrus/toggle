@@ -1,15 +1,15 @@
 package io.hwalrus.toggle
 
-sealed class UpdateResult {
-    data object Updated : UpdateResult()
-    data object NotFound : UpdateResult()
+sealed class StoreResult {
+    data object Success : StoreResult()
+    data object NotFound : StoreResult()
 }
 
 interface ToggleStore {
     fun add(name: String, enabled: Boolean)
     fun isEnabled(name: String): Boolean
     fun getAll(): Map<String, Boolean>
-    fun enable(name: String): UpdateResult
-    fun disable(name: String): UpdateResult
-    fun delete(name: String): UpdateResult
+    fun enable(name: String): StoreResult
+    fun disable(name: String): StoreResult
+    fun delete(name: String): StoreResult
 }
