@@ -10,10 +10,11 @@ import org.http4k.routing.routes
 import org.http4k.server.Netty
 import org.http4k.server.asServer
 
-val app: HttpHandler = routes(
-    "/hello" bind GET to { _: Request -> Response(OK).body("Hello, World!") }
+fun app(): HttpHandler = routes(
+    "/hello" bind GET to { _: Request -> Response(OK).body("Hello, World!") },
+    "/toggle" bind toggleRoutes()
 )
 
 fun main() {
-    app.asServer(Netty(9000)).start()
+    app().asServer(Netty(9000)).start()
 }
