@@ -61,10 +61,9 @@ class ToggleEndToEndTest : DescribeSpec({
     }
 
     describe("GET /toggle/{name}") {
-        it("returns false for an unknown toggle") {
+        it("returns 404 for an unknown toggle") {
             get("/toggle/e2e-unknown").use { response ->
-                response.code shouldBe 200
-                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+                response.code shouldBe 404
             }
         }
     }

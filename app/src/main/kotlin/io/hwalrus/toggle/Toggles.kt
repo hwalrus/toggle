@@ -40,7 +40,10 @@ fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
         Response(CREATED).with(LOCATION of Uri.of("/toggle/$name"))
     },
     "/{name}" bind GET to { req ->
-        Response(OK).with(toggleStateBody of ToggleState(store.isEnabled(toggleName(req))))
+        when (val result = store.get(toggleName(req))) {
+            GetResult.NotFound -> Response(NOT_FOUND)
+            is GetResult.Found -> Response(OK).with(toggleStateBody of ToggleState(result.enabled))
+        }
     },
     "/{name}/enable" bind POST to { req ->
         store.enable(toggleName(req)).toResponse()

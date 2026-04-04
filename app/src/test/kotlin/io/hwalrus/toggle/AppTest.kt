@@ -43,10 +43,9 @@ class AppTest : DescribeSpec({
     describe("/toggle") {
         val handler = app()
 
-        it("returns false for an unknown toggle") {
+        it("returns 404 for an unknown toggle") {
             val response = handler(Request(GET, "/toggle/myFeature"))
-            response.status shouldBe OK
-            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
+            response.status shouldBe NOT_FOUND
         }
 
         it("returns 201 Created with a Location header") {
@@ -88,9 +87,7 @@ class AppTest : DescribeSpec({
             val handler = app()
             handler(Request(POST, "/toggle/myFeature?enabled=false"))
             handler(Request(POST, "/toggle/myFeature/enable"))
-            val response = handler(Request(GET, "/toggle/myFeature"))
-            response.status shouldBe OK
-            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":true}""")
+            Jackson.parse(handler(Request(GET, "/toggle/myFeature")).bodyString()) shouldBe Jackson.parse("""{"enabled":true}""")
         }
     }
 
@@ -118,9 +115,7 @@ class AppTest : DescribeSpec({
             val handler = app()
             handler(Request(POST, "/toggle/myFeature?enabled=true"))
             handler(Request(POST, "/toggle/myFeature/disable"))
-            val response = handler(Request(GET, "/toggle/myFeature"))
-            response.status shouldBe OK
-            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
+            Jackson.parse(handler(Request(GET, "/toggle/myFeature")).bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
         }
     }
 })

@@ -9,7 +9,10 @@ class InMemoryToggleStore : ToggleStore {
         store.updateAndGet { it + (name to enabled) }
     }
 
-    override fun isEnabled(name: String): Boolean = store.get().getOrDefault(name, false)
+    override fun get(name: String): GetResult {
+        val snapshot = store.get()
+        return if (name in snapshot) GetResult.Found(snapshot.getValue(name)) else GetResult.NotFound
+    }
 
     override fun getAll(): Map<String, Boolean> = store.get()
 
