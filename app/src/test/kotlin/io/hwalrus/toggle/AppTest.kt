@@ -45,21 +45,21 @@ class AppTest : DescribeSpec({
         it("returns false for an unknown toggle") {
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
-            response.bodyString() shouldBe "false"
+            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
         }
 
         it("adds a toggle and returns its enabled state") {
             handler(Request(POST, "/toggle/myFeature?enabled=true"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
-            response.bodyString() shouldBe "true"
+            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":true}""")
         }
 
         it("adds a disabled toggle and returns false") {
             handler(Request(POST, "/toggle/myFeature?enabled=false"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
-            response.bodyString() shouldBe "false"
+            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
         }
 
         it("overwriting a toggle reflects the latest value") {
@@ -67,7 +67,7 @@ class AppTest : DescribeSpec({
             handler(Request(POST, "/toggle/myFeature?enabled=false"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
-            response.bodyString() shouldBe "false"
+            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
         }
     }
 
@@ -83,7 +83,7 @@ class AppTest : DescribeSpec({
             handler(Request(POST, "/toggle/myFeature/enable"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
-            response.bodyString() shouldBe "true"
+            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":true}""")
         }
     }
 
@@ -113,7 +113,7 @@ class AppTest : DescribeSpec({
             handler(Request(POST, "/toggle/myFeature/disable"))
             val response = handler(Request(GET, "/toggle/myFeature"))
             response.status shouldBe OK
-            response.bodyString() shouldBe "false"
+            Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
         }
     }
 })

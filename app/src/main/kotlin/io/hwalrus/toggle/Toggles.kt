@@ -15,9 +15,12 @@ import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 
+private data class ToggleState(val enabled: Boolean)
+
 private val toggleName = Path.of("name")
 private val toggleEnabled = Query.boolean().required("enabled")
 private val allTogglesBody = autoBody<Map<String, Boolean>>().toLens()
+private val toggleStateBody = autoBody<ToggleState>().toLens()
 
 private fun UpdateResult.toResponse() = when (this) {
     UpdateResult.Updated -> Response(OK)
@@ -33,7 +36,7 @@ fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
         Response(OK)
     },
     "/{name}" bind GET to { req ->
-        Response(OK).body(store.isEnabled(toggleName(req)).toString())
+        Response(OK).with(toggleStateBody of ToggleState(store.isEnabled(toggleName(req))))
     },
     "/{name}/enable" bind POST to { req ->
         store.enable(toggleName(req)).toResponse()

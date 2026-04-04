@@ -40,7 +40,7 @@ class ToggleEndToEndTest : DescribeSpec({
             post("/toggle/e2e-add-enabled?enabled=true").use { it.code shouldBe 200 }
             get("/toggle/e2e-add-enabled").use { response ->
                 response.code shouldBe 200
-                checkNotNull(response.body).string() shouldBe "true"
+                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
             }
         }
 
@@ -48,7 +48,7 @@ class ToggleEndToEndTest : DescribeSpec({
             post("/toggle/e2e-add-disabled?enabled=false").use { it.code shouldBe 200 }
             get("/toggle/e2e-add-disabled").use { response ->
                 response.code shouldBe 200
-                checkNotNull(response.body).string() shouldBe "false"
+                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
             }
         }
     }
@@ -57,7 +57,7 @@ class ToggleEndToEndTest : DescribeSpec({
         it("returns false for an unknown toggle") {
             get("/toggle/e2e-unknown").use { response ->
                 response.code shouldBe 200
-                checkNotNull(response.body).string() shouldBe "false"
+                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
             }
         }
     }
@@ -67,7 +67,7 @@ class ToggleEndToEndTest : DescribeSpec({
             post("/toggle/e2e-enable?enabled=false").use { it.code shouldBe 200 }
             post("/toggle/e2e-enable/enable").use { it.code shouldBe 200 }
             get("/toggle/e2e-enable").use { response ->
-                checkNotNull(response.body).string() shouldBe "true"
+                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
             }
         }
 
@@ -81,7 +81,7 @@ class ToggleEndToEndTest : DescribeSpec({
             post("/toggle/e2e-disable?enabled=true").use { it.code shouldBe 200 }
             post("/toggle/e2e-disable/disable").use { it.code shouldBe 200 }
             get("/toggle/e2e-disable").use { response ->
-                checkNotNull(response.body).string() shouldBe "false"
+                Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
             }
         }
 
