@@ -12,7 +12,7 @@ import org.http4k.server.asServer
 
 fun app(): HttpHandler = routes(
     "/hello" bind GET to { _: Request -> Response(OK).body("Hello, World!") },
-    "/toggle" bind toggleRoutes()
+    "/toggle" bind toggleRoutes(InMemoryToggleStore())
 )
 
 fun main() {

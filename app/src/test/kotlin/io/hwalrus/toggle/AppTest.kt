@@ -40,5 +40,13 @@ class AppTest : DescribeSpec({
             response.status shouldBe OK
             response.bodyString() shouldBe "false"
         }
+
+        it("overwriting a toggle reflects the latest value") {
+            handler(Request(POST, "/toggle/myFeature?enabled=true"))
+            handler(Request(POST, "/toggle/myFeature?enabled=false"))
+            val response = handler(Request(GET, "/toggle/myFeature"))
+            response.status shouldBe OK
+            response.bodyString() shouldBe "false"
+        }
     }
 })
