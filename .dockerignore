@@ -1,0 +1,8 @@
+.git/
+.gradle/
+.idea/
+.kotlin/
+build/
+app/build/
+web/node_modules/
+web/dist/

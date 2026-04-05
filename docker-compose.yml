@@ -1,0 +1,6 @@
+services:
+  toggle:
+    build: .
+    ports:
+      - "10800:10800"
+    restart: unless-stopped

@@ -66,6 +66,7 @@ Deletes an existing toggle. Returns `404` if the toggle does not exist.
 
 - JDK 25
 - Node.js (for the web UI)
+- Docker (for containerised builds and running)
 
 ## Building
 
@@ -165,6 +166,32 @@ Four layers of frontend tests are in place (Vitest + React Testing Library):
 
 ```bash
 cd web && npm run build   # tsc -b runs as part of the build
+```
+
+## Docker
+
+The app can be built and run as a container. The image uses a three-stage build (Node → JDK → JRE) and runs on **Eclipse Temurin 25 JRE + Alpine** as the minimal, security-hardened runtime base.
+
+### Build and run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+The app is available at [http://localhost:10800](http://localhost:10800).
+
+### Build and run standalone
+
+```bash
+docker build -t toggle .
+docker run -p 10800:10800 toggle
+```
+
+### Inspect the image
+
+```bash
+docker images toggle      # check final image size
+docker history toggle     # inspect layers
 ```
 
 ## Tech stack
