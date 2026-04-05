@@ -29,12 +29,14 @@ class ToggleEndToEndTest : DescribeSpec({
     fun delete(baseUrl: String, path: String): Response =
         client.newCall(Request.Builder().url("$baseUrl$path").delete().build()).execute()
 
+    fun Response.bodyText(): String = checkNotNull(body).string()
+
     describe("GET /toggle") {
         it("returns an empty JSON object when no toggles exist") {
             withServer { baseUrl ->
                 get(baseUrl, "/toggle").use { response ->
                     response.code shouldBe 200
-                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("{}")
+                    Jackson.parse(response.bodyText()) shouldBe Jackson.parse("{}")
                 }
             }
         }
@@ -55,7 +57,7 @@ class ToggleEndToEndTest : DescribeSpec({
                 post(baseUrl, "/toggle/feature?enabled=true").use { it.code shouldBe 201 }
                 get(baseUrl, "/toggle/feature").use { response ->
                     response.code shouldBe 200
-                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
+                    Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":true}""")
                 }
             }
         }
@@ -65,7 +67,7 @@ class ToggleEndToEndTest : DescribeSpec({
                 post(baseUrl, "/toggle/feature?enabled=false").use { it.code shouldBe 201 }
                 get(baseUrl, "/toggle/feature").use { response ->
                     response.code shouldBe 200
-                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+                    Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":false}""")
                 }
             }
         }
@@ -87,7 +89,7 @@ class ToggleEndToEndTest : DescribeSpec({
                 post(baseUrl, "/toggle/feature?enabled=false").use { it.code shouldBe 201 }
                 post(baseUrl, "/toggle/feature/enable").use { it.code shouldBe 200 }
                 get(baseUrl, "/toggle/feature").use { response ->
-                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":true}""")
+                    Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":true}""")
                 }
             }
         }
@@ -105,7 +107,7 @@ class ToggleEndToEndTest : DescribeSpec({
                 post(baseUrl, "/toggle/feature?enabled=true").use { it.code shouldBe 201 }
                 post(baseUrl, "/toggle/feature/disable").use { it.code shouldBe 200 }
                 get(baseUrl, "/toggle/feature").use { response ->
-                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"enabled":false}""")
+                    Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":false}""")
                 }
             }
         }
@@ -139,7 +141,7 @@ class ToggleEndToEndTest : DescribeSpec({
                 post(baseUrl, "/toggle/a?enabled=true").use { it.code shouldBe 201 }
                 post(baseUrl, "/toggle/b?enabled=false").use { it.code shouldBe 201 }
                 get(baseUrl, "/toggle").use { response ->
-                    Jackson.parse(checkNotNull(response.body).string()) shouldBe Jackson.parse("""{"a":true,"b":false}""")
+                    Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"a":true,"b":false}""")
                 }
             }
         }
