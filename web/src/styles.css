@@ -229,6 +229,7 @@ body {
   border-radius: 99px;
   transition: background var(--transition), border-color var(--transition);
   display: block;
+  position: relative;
 }
 
 .switch-track::after {
