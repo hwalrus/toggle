@@ -97,6 +97,14 @@ To run a single test class:
 ./gradlew test --tests "io.hwalrus.toggle.AppTest"
 ```
 
+Three layers of backend tests are in place:
+
+| Test class | Type | What it covers |
+|---|---|---|
+| `InMemoryToggleStoreTest` | Unit | Store contract — add, get, enable, disable, delete |
+| `AppTest` | Unit | HTTP routes — status codes, JSON responses, Location header |
+| `ToggleEndToEndTest` | E2E | Full stack — real Netty server, real HTTP via OkHttp |
+
 ## Web UI
 
 The frontend lives in `web/` and is built with React 19, TypeScript, and Vite.
@@ -128,6 +136,30 @@ cd web && npm run build
 ```
 
 Output goes to `web/dist/`. The Gradle build runs this automatically.
+
+To clean and rebuild from scratch:
+
+```bash
+cd web && rm -rf dist && npm run build
+```
+
+### Testing
+
+```bash
+cd web && npm test              # run all UI tests once
+cd web && npm run test:watch    # watch mode (re-runs on file save)
+cd web && npm run test:coverage # run with coverage report
+```
+
+Four layers of frontend tests are in place (Vitest + React Testing Library):
+
+| Test file | What it covers |
+|---|---|
+| `api.test.ts` | Fetch wrappers — correct URLs, methods, response mapping, error handling |
+| `AddToggleForm.test.tsx` | Form validation, submission, loading state, error display |
+| `ToggleList.test.tsx` | Empty state and list rendering |
+| `ToggleRow.test.tsx` | Enable/disable switch, two-step delete confirmation |
+| `App.test.tsx` | Mount fetch, error banner, empty state, add-then-refresh cycle |
 
 ### Type check
 
