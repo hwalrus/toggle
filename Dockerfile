@@ -1,5 +1,5 @@
 # Stage 1: build frontend
-FROM node:22-alpine AS frontend
+FROM node:24-alpine AS frontend
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
@@ -19,6 +19,7 @@ RUN ./gradlew :app:installDist -x buildFrontend --no-daemon
 
 # Stage 3: runtime
 FROM eclipse-temurin:25-jre-alpine
+RUN apk upgrade --no-cache
 RUN addgroup -S toggle && adduser -S toggle -G toggle
 WORKDIR /app
 COPY --from=build /build/app/build/install/app .
