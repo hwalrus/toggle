@@ -9,3 +9,7 @@ build
 
 # Ignore IntelliJ IDEA project files
 .idea
+
+# Frontend
+web/node_modules/
+web/dist/

@@ -50,3 +50,24 @@ val e2eTestTask = tasks.register<Test>("e2eTest") {
 tasks.named("check") {
     dependsOn(e2eTestTask)
 }
+
+val buildFrontend = tasks.register<Exec>("buildFrontend") {
+    workingDir = file("../web")
+    commandLine("sh", "-c", "npm run build")
+    environment("PATH", System.getenv("PATH") ?: "/usr/local/bin:/usr/bin:/bin")
+    inputs.dir("../web/src")
+    inputs.files("../web/package.json", "../web/vite.config.ts", "../web/tsconfig.json")
+    outputs.dir("../web/dist")
+}
+
+val copyFrontend = tasks.register<Copy>("copyFrontend") {
+    dependsOn(buildFrontend)
+    from("../web/dist")
+    into(layout.buildDirectory.dir("generated/frontend/public"))
+}
+
+sourceSets.main.get().resources.srcDir(layout.buildDirectory.dir("generated/frontend"))
+
+tasks.named("processResources") {
+    dependsOn(copyFrontend)
+}
