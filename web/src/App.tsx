@@ -27,7 +27,7 @@ export default function App() {
         <div className="card">
           <AddToggleForm onCreated={refresh} />
         </div>
-        {error && <div className="error-banner">{error}</div>}
+        {error && <div className="error-banner" role="alert">{error}</div>}
         <div className="card">
           <ToggleList toggles={toggles} onChanged={refresh} />
         </div>

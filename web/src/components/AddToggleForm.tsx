@@ -32,7 +32,9 @@ export default function AddToggleForm({ onCreated }: Props) {
     <form className="add-form" onSubmit={handleSubmit}>
       <h2 className="section-title">New toggle</h2>
       <div className="add-form-row">
+        <label htmlFor="toggle-name-input" className="sr-only">Toggle name</label>
         <input
+          id="toggle-name-input"
           className="text-input"
           type="text"
           placeholder="toggle-name"
@@ -54,7 +56,7 @@ export default function AddToggleForm({ onCreated }: Props) {
           Add
         </button>
       </div>
-      {error && <p className="field-error">{error}</p>}
+      {error && <p className="field-error" role="alert">{error}</p>}
     </form>
   )
 }
