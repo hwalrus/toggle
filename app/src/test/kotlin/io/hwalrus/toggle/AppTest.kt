@@ -7,6 +7,7 @@ import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.CREATED
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
@@ -50,6 +51,16 @@ class AppTest : DescribeSpec({
             val response = app()(Request(POST, "/toggle/myFeature?enabled=true"))
             response.status shouldBe CREATED
             response.header("Location") shouldBe "/toggle/myFeature"
+        }
+
+        it("returns 400 when enabled param is missing") {
+            val response = app()(Request(POST, "/toggle/myFeature"))
+            response.status shouldBe BAD_REQUEST
+        }
+
+        it("returns 400 when enabled param is not a boolean") {
+            val response = app()(Request(POST, "/toggle/myFeature?enabled=notabool"))
+            response.status shouldBe BAD_REQUEST
         }
 
         it("adds a toggle and returns its enabled state") {
