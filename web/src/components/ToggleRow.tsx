@@ -6,13 +6,17 @@ type Props = { toggle: Toggle; onChanged: () => void }
 export default function ToggleRow({ toggle, onChanged }: Props) {
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleToggle() {
     setBusy(true)
+    setError(null)
     try {
       if (toggle.enabled) await disable(toggle.name)
       else await enable(toggle.name)
       onChanged()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed')
     } finally {
       setBusy(false)
     }
@@ -24,9 +28,12 @@ export default function ToggleRow({ toggle, onChanged }: Props) {
       return
     }
     setBusy(true)
+    setError(null)
     try {
       await remove(toggle.name)
       onChanged()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed')
     } finally {
       setBusy(false)
       setConfirmDelete(false)
@@ -62,6 +69,7 @@ export default function ToggleRow({ toggle, onChanged }: Props) {
           </svg>
         </button>
       )}
+      {error && <span className="row-error" role="alert">{error}</span>}
     </li>
   )
 }

@@ -131,3 +131,34 @@ describe('ToggleRow — delete confirmation flow', () => {
     expect(screen.getByRole('button', { name: /yes/i })).toBeDisabled()
   })
 })
+
+describe('ToggleRow — error handling', () => {
+  it('shows an error when disable rejects', async () => {
+    vi.mocked(api.disable).mockRejectedValue(new Error('Failed to disable toggle: 500'))
+    const user = userEvent.setup()
+    render(<ToggleRow toggle={tog('feature-x', true)} onChanged={vi.fn()} />)
+    await user.click(screen.getAllByRole('checkbox')[0])
+    expect(screen.getByRole('alert')).toHaveTextContent('500')
+  })
+
+  it('shows an error when remove rejects', async () => {
+    vi.mocked(api.remove).mockRejectedValue(new Error('Failed to delete toggle: 404'))
+    const user = userEvent.setup()
+    render(<ToggleRow toggle={tog('feature-x', true)} onChanged={vi.fn()} />)
+    await user.click(screen.getByTitle('Delete'))
+    await user.click(screen.getByRole('button', { name: /yes/i }))
+    expect(screen.getByRole('alert')).toHaveTextContent('404')
+  })
+
+  it('clears the error when the switch is clicked again', async () => {
+    vi.mocked(api.disable)
+      .mockRejectedValueOnce(new Error('Request failed'))
+      .mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    render(<ToggleRow toggle={tog('feature-x', true)} onChanged={vi.fn()} />)
+    await user.click(screen.getAllByRole('checkbox')[0])
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    await user.click(screen.getAllByRole('checkbox')[0])
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})

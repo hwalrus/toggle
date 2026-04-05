@@ -137,6 +137,12 @@ body {
   color: var(--color-danger);
 }
 
+.row-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin-left: auto;
+}
+
 /* Toggle list */
 
 .toggle-list {
