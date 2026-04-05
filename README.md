@@ -65,6 +65,7 @@ Deletes an existing toggle. Returns `404` if the toggle does not exist.
 ## Requirements
 
 - JDK 25
+- Node.js (for the web UI)
 
 ## Building
 
@@ -72,13 +73,15 @@ Deletes an existing toggle. Returns `404` if the toggle does not exist.
 ./gradlew build
 ```
 
+This also builds the frontend and packages it into the JAR under `public/`.
+
 ## Running
 
 ```bash
 ./gradlew run
 ```
 
-The server starts on port `10800` by default.
+The server starts on port `10800` by default and serves both the API and the web UI at [http://localhost:10800](http://localhost:10800).
 
 ## Testing
 
@@ -94,6 +97,44 @@ To run a single test class:
 ./gradlew test --tests "io.hwalrus.toggle.AppTest"
 ```
 
+## Web UI
+
+The frontend lives in `web/` and is built with React 19, TypeScript, and Vite.
+
+### Install dependencies
+
+```bash
+cd web && npm install
+```
+
+### Development (hot reload)
+
+Run the backend and frontend in separate terminals:
+
+```bash
+# Terminal 1 — backend
+./gradlew run
+
+# Terminal 2 — frontend
+cd web && npm run dev
+```
+
+The UI is available at [http://localhost:5173](http://localhost:5173) and proxies API requests to the backend at `10800`.
+
+### Build
+
+```bash
+cd web && npm run build
+```
+
+Output goes to `web/dist/`. The Gradle build runs this automatically.
+
+### Type check
+
+```bash
+cd web && npm run build   # tsc -b runs as part of the build
+```
+
 ## Tech stack
 
 | Concern | Library |
@@ -103,3 +144,4 @@ To run a single test class:
 | Unit/integration tests | [Kotest](https://kotest.io/) |
 | E2E HTTP client | [OkHttp](https://square.github.io/okhttp/) |
 | Build | Gradle 9.4.1 with version catalog |
+| Frontend | React 19 + TypeScript + [Vite](https://vite.dev/) |
