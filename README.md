@@ -1,66 +1,112 @@
 # toggle
 
-A REST API for managing feature toggles, built with [http4k](https://www.http4k.org/) in Kotlin.
+A REST API for managing feature toggles grouped by namespace, built with [http4k](https://www.http4k.org/) in Kotlin.
 
 ## API
 
-All endpoints are under `/toggle`.
+Toggles are scoped to groups. Toggle names only need to be unique within a group.
 
-### Create a toggle
+### Groups
 
-```
-POST /toggle/{name}?enabled=true|false
-```
-
-Creates a named toggle with an initial enabled state. Returns `201 Created` with a `Location` header pointing to the new resource.
-
-### Get a toggle
+#### List groups
 
 ```
-GET /toggle/{name}
+GET /group
 ```
 
-Returns the current state of the toggle. Returns `404` if the toggle does not exist.
+Returns a sorted JSON array of group names.
+
+```json
+["payments", "ui"]
+```
+
+#### Create a group
+
+```
+POST /group/{group}
+```
+
+Returns `201 Created` with a `Location` header. Returns `409 Conflict` if the group already exists.
+
+#### Rename a group
+
+```
+POST /group/{group}/rename?name={newName}
+```
+
+Renames the group and preserves all its toggles. Returns `404` if the group does not exist.
+
+#### Delete a group
+
+```
+DELETE /group/{group}
+```
+
+Deletes the group and all its toggles. Returns `404` if the group does not exist.
+
+---
+
+### Toggles
+
+All toggle endpoints are nested under a group.
+
+#### Create a toggle
+
+```
+POST /group/{group}/toggle/{name}?enabled=true|false
+```
+
+Creates a named toggle with an initial enabled state. Returns `201 Created` with a `Location` header. Returns `404` if the group does not exist.
+
+#### Get a toggle
+
+```
+GET /group/{group}/toggle/{name}
+```
+
+Returns the current state of the toggle. Returns `404` if the toggle or group does not exist.
 
 ```json
 { "enabled": true }
 ```
 
-### Get all toggles
+#### Get all toggles in a group
 
 ```
-GET /toggle
+GET /group/{group}/toggle
 ```
 
-Returns all toggles and their current states as a JSON object.
+Returns all toggles in the group and their current states as a JSON object. Returns `404` if the group does not exist.
 
 ```json
 { "my-feature": true, "another-feature": false }
 ```
 
-### Enable a toggle
+#### Enable a toggle
 
 ```
-POST /toggle/{name}/enable
+POST /group/{group}/toggle/{name}/enable
 ```
 
 Enables an existing toggle. Returns `404` if the toggle does not exist.
 
-### Disable a toggle
+#### Disable a toggle
 
 ```
-POST /toggle/{name}/disable
+POST /group/{group}/toggle/{name}/disable
 ```
 
 Disables an existing toggle. Returns `404` if the toggle does not exist.
 
-### Delete a toggle
+#### Delete a toggle
 
 ```
-DELETE /toggle/{name}
+DELETE /group/{group}/toggle/{name}
 ```
 
 Deletes an existing toggle. Returns `404` if the toggle does not exist.
+
+---
 
 ## Requirements
 
@@ -102,8 +148,8 @@ Three layers of backend tests are in place:
 
 | Test class | Type | What it covers |
 |---|---|---|
-| `InMemoryToggleStoreTest` | Unit | Store contract — add, get, enable, disable, delete |
-| `AppTest` | Unit | HTTP routes — status codes, JSON responses, Location header |
+| `InMemoryToggleStoreTest` | Unit | Store contract — groups and toggle operations |
+| `AppTest` | Unit | HTTP routes — status codes, JSON responses, headers, CORS, security headers |
 | `ToggleEndToEndTest` | E2E | Full stack — real Netty server, real HTTP via OkHttp |
 
 ## Web UI
@@ -152,15 +198,17 @@ cd web && npm run test:watch    # watch mode (re-runs on file save)
 cd web && npm run test:coverage # run with coverage report
 ```
 
-Four layers of frontend tests are in place (Vitest + React Testing Library):
+Seven layers of frontend tests are in place (Vitest + React Testing Library):
 
 | Test file | What it covers |
 |---|---|
 | `api.test.ts` | Fetch wrappers — correct URLs, methods, response mapping, error handling |
-| `AddToggleForm.test.tsx` | Form validation, submission, loading state, error display |
-| `ToggleList.test.tsx` | Empty state and list rendering |
-| `ToggleRow.test.tsx` | Enable/disable switch, two-step delete confirmation |
-| `App.test.tsx` | Mount fetch, error banner, empty state, add-then-refresh cycle |
+| `AddGroupForm.test.tsx` | Group form validation, submission, error display |
+| `AddToggleForm.test.tsx` | Toggle form validation, submission, loading state, error display |
+| `GroupSection.test.tsx` | Group header, inline rename, two-step delete confirmation |
+| `ToggleList.test.tsx` | Loading state, empty state, and list rendering |
+| `ToggleRow.test.tsx` | Enable/disable switch, two-step delete confirmation, error handling |
+| `App.test.tsx` | Mount fetch, group rendering, error banner, empty state, add-then-refresh cycle |
 
 ### Type check
 
@@ -186,6 +234,12 @@ The app is available at [http://localhost:10800](http://localhost:10800).
 docker build -t toggle .
 docker run -p 10800:10800 toggle
 ```
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `ALLOWED_ORIGIN` | *(unset)* | Restricts CORS to a single origin (e.g. `https://my-app.example.com`). When unset, all origins are permitted (suitable for local use only). |
 
 ### Inspect the image
 
