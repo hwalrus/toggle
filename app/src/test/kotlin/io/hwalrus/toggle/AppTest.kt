@@ -12,6 +12,7 @@ import org.http4k.core.Status.Companion.CREATED
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.format.Jackson
+import io.kotest.matchers.shouldNotBe
 
 class AppTest : DescribeSpec({
     describe("GET /toggle") {
@@ -130,6 +131,31 @@ class AppTest : DescribeSpec({
             handler(Request(POST, "/toggle/myFeature?enabled=true"))
             handler(Request(DELETE, "/toggle/myFeature")).status shouldBe OK
             handler(Request(DELETE, "/toggle/myFeature")).status shouldBe NOT_FOUND
+        }
+    }
+
+    describe("security headers") {
+        it("API responses include X-Content-Type-Options, X-Frame-Options, Cache-Control") {
+            val response = app()(Request(GET, "/toggle"))
+            response.header("X-Content-Type-Options") shouldBe "nosniff"
+            response.header("X-Frame-Options") shouldBe "DENY"
+            response.header("Cache-Control") shouldBe "no-store"
+        }
+    }
+
+    describe("CORS") {
+        it("reflects the configured origin when ALLOWED_ORIGIN is set") {
+            val response = app(allowedOrigin = "https://example.com")(
+                Request(GET, "/toggle").header("Origin", "https://example.com")
+            )
+            response.header("Access-Control-Allow-Origin") shouldBe "https://example.com"
+        }
+
+        it("does not reflect an unconfigured origin") {
+            val response = app(allowedOrigin = "https://example.com")(
+                Request(GET, "/toggle").header("Origin", "https://evil.com")
+            )
+            response.header("Access-Control-Allow-Origin") shouldNotBe "https://evil.com"
         }
     }
 
