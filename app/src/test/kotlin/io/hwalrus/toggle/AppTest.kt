@@ -63,6 +63,22 @@ class AppTest : DescribeSpec({
             response.status shouldBe BAD_REQUEST
         }
 
+        it("returns 400 when toggle name contains spaces") {
+            val response = app()(Request(POST, "/toggle/bad%20name?enabled=true"))
+            response.status shouldBe BAD_REQUEST
+        }
+
+        it("returns 400 when toggle name contains dots") {
+            val response = app()(Request(POST, "/toggle/bad.name?enabled=true"))
+            response.status shouldBe BAD_REQUEST
+        }
+
+        it("returns 400 when toggle name exceeds 100 characters") {
+            val longName = "a".repeat(101)
+            val response = app()(Request(POST, "/toggle/$longName?enabled=true"))
+            response.status shouldBe BAD_REQUEST
+        }
+
         it("adds a toggle and returns its enabled state") {
             val handler = app()
             handler(Request(POST, "/toggle/myFeature?enabled=true"))

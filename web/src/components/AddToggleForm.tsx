@@ -9,7 +9,7 @@ export default function AddToggleForm({ onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const valid = name.trim().length > 0 && !/\s/.test(name)
+  const valid = /^[a-zA-Z0-9_-]{1,100}$/.test(name)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -17,7 +17,7 @@ export default function AddToggleForm({ onCreated }: Props) {
     setSubmitting(true)
     setError(null)
     try {
-      await create(name.trim(), enabled)
+      await create(name, enabled)
       setName('')
       setEnabled(true)
       onCreated()

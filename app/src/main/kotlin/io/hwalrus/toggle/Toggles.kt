@@ -4,6 +4,7 @@ import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.CREATED
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
@@ -17,6 +18,8 @@ import org.http4k.lens.boolean
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
+
+private val namePattern = Regex("^[a-zA-Z0-9_-]{1,100}$")
 
 private data class ToggleState(val enabled: Boolean)
 
@@ -36,6 +39,7 @@ fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
     },
     "/{name}" bind POST to { req ->
         val name = toggleName(req)
+        if (!namePattern.matches(name)) return@to Response(BAD_REQUEST)
         store.add(name, toggleEnabled(req))
         Response(CREATED).with(LOCATION of Uri.of("/toggle/$name"))
     },
