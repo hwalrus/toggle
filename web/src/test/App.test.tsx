@@ -43,6 +43,16 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /new toggle/i })).toBeInTheDocument()
   })
 
+  it('shows loading indicator before the initial fetch resolves', async () => {
+    let resolve!: (v: typeof defaultToggles) => void
+    vi.mocked(api.getAll).mockReturnValueOnce(new Promise(r => { resolve = r }))
+    render(<App />)
+    expect(screen.getByText('Loading…')).toBeInTheDocument()
+    expect(screen.queryByText(/No toggles yet/)).not.toBeInTheDocument()
+    resolve(defaultToggles)
+    expect(await screen.findByText('alpha')).toBeInTheDocument()
+  })
+
   it('shows empty-state message when getAll returns []', async () => {
     vi.mocked(api.getAll).mockResolvedValue([])
     render(<App />)

@@ -6,6 +6,7 @@ import ToggleList from './components/ToggleList.tsx'
 export default function App() {
   const [toggles, setToggles] = useState<Toggle[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     try {
@@ -13,6 +14,8 @@ export default function App() {
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -29,7 +32,7 @@ export default function App() {
         </div>
         {error && <div className="error-banner" role="alert">{error}</div>}
         <div className="card">
-          <ToggleList toggles={toggles} onChanged={refresh} />
+          <ToggleList toggles={toggles} loading={loading} onChanged={refresh} />
         </div>
       </main>
     </div>

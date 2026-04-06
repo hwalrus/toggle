@@ -21,31 +21,38 @@ const toggles: Toggle[] = [
 ]
 
 describe('ToggleList', () => {
+  it('renders loading indicator when loading is true', () => {
+    render(<ToggleList toggles={[]} loading={true} onChanged={vi.fn()} />)
+    expect(screen.getByText('Loading…')).toBeInTheDocument()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    expect(screen.queryByText(/No toggles yet/)).not.toBeInTheDocument()
+  })
+
   it('renders empty-state message and no list when toggles is empty', () => {
-    render(<ToggleList toggles={[]} onChanged={vi.fn()} />)
+    render(<ToggleList toggles={[]} loading={false} onChanged={vi.fn()} />)
     expect(screen.getByText('No toggles yet. Add one above.')).toBeInTheDocument()
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
   it('renders one list item per toggle', () => {
-    render(<ToggleList toggles={toggles} onChanged={vi.fn()} />)
+    render(<ToggleList toggles={toggles} loading={false} onChanged={vi.fn()} />)
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
   })
 
   it('renders each toggle name', () => {
-    render(<ToggleList toggles={toggles} onChanged={vi.fn()} />)
+    render(<ToggleList toggles={toggles} loading={false} onChanged={vi.fn()} />)
     expect(screen.getByText('alpha')).toBeInTheDocument()
     expect(screen.getByText('beta')).toBeInTheDocument()
   })
 
   it('renders badge-enabled class for enabled toggle and badge-disabled for disabled', () => {
-    render(<ToggleList toggles={toggles} onChanged={vi.fn()} />)
+    render(<ToggleList toggles={toggles} loading={false} onChanged={vi.fn()} />)
     expect(screen.getByText('enabled')).toHaveClass('badge-enabled')
     expect(screen.getByText('disabled')).toHaveClass('badge-disabled')
   })
 
   it('does not show empty-state when toggles are present', () => {
-    render(<ToggleList toggles={toggles} onChanged={vi.fn()} />)
+    render(<ToggleList toggles={toggles} loading={false} onChanged={vi.fn()} />)
     expect(screen.queryByText(/No toggles yet/)).not.toBeInTheDocument()
   })
 })
