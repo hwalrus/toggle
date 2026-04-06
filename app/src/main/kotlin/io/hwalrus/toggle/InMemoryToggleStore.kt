@@ -25,6 +25,10 @@ class InMemoryToggleStore : ToggleStore {
         return if (toggleExists) StoreResult.Success else StoreResult.NotFound
     }
 
+    override fun clear() {
+        store.set(emptyMap())
+    }
+
     private fun update(name: String, enabled: Boolean): StoreResult {
         val toggleExists = name in store.getAndUpdate { snapshot ->
             if (name in snapshot) snapshot + (name to enabled) else snapshot

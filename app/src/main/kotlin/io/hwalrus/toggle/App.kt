@@ -27,7 +27,10 @@ private val securityHeaders = Filter { next ->
     }
 }
 
-fun app(allowedOrigin: String? = System.getenv("ALLOWED_ORIGIN")): HttpHandler {
+fun app(
+    store: ToggleStore = InMemoryToggleStore(),
+    allowedOrigin: String? = System.getenv("ALLOWED_ORIGIN")
+): HttpHandler {
     val corsPolicy = if (!allowedOrigin.isNullOrBlank()) {
         CorsPolicy(OriginPolicy.Only(allowedOrigin), listOf("content-type"), listOf(GET, POST, DELETE))
     } else {
@@ -38,7 +41,7 @@ fun app(allowedOrigin: String? = System.getenv("ALLOWED_ORIGIN")): HttpHandler {
         .then(ServerFilters.CatchLensFailure)
         .then(
             routes(
-                "/toggle" bind securityHeaders.then(toggleRoutes(InMemoryToggleStore())),
+                "/toggle" bind securityHeaders.then(toggleRoutes(store)),
                 "/" bind static(Classpath("public"))
             )
         )
