@@ -41,6 +41,10 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
+
 val e2eTestTask = tasks.register<Test>("e2eTest") {
     testClassesDirs = e2eTest.output.classesDirs
     classpath = e2eTest.runtimeClasspath

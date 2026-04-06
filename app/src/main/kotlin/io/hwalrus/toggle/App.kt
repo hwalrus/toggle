@@ -48,5 +48,6 @@ fun app(
 }
 
 fun main() {
-    app().asServer(Netty(10800)).start()
+    val server = app().asServer(Netty(10800)).start()
+    Runtime.getRuntime().addShutdownHook(Thread { server.stop() })
 }
