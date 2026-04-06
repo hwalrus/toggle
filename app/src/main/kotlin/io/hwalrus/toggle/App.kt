@@ -41,7 +41,7 @@ fun app(
         .then(ServerFilters.CatchLensFailure)
         .then(
             routes(
-                "/toggle" bind securityHeaders.then(toggleRoutes(store)),
+                "/group" bind securityHeaders.then(groupRoutes(store)),
                 "/" bind static(Classpath("public"))
             )
         )

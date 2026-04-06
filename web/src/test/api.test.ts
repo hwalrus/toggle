@@ -1,4 +1,4 @@
-import { getAll, create, enable, disable, remove } from '../api.ts'
+import { getGroups, createGroup, renameGroup, deleteGroup, getToggles, create, enable, disable, remove } from '../api.ts'
 
 function mockFetch(ok: boolean, body?: unknown, status = 200) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -12,110 +12,160 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('getAll', () => {
-  it('calls GET /toggle and maps Record<string,boolean> to Toggle[]', async () => {
-    mockFetch(true, { featureA: true, featureB: false })
-    const result = await getAll()
-    expect(result).toEqual([
-      { name: 'featureA', enabled: true },
-      { name: 'featureB', enabled: false },
-    ])
-    expect(fetch).toHaveBeenCalledWith('/toggle')
+describe('getGroups', () => {
+  it('calls GET /group and returns the list', async () => {
+    mockFetch(true, ['payments', 'ui'])
+    const result = await getGroups()
+    expect(result).toEqual(['payments', 'ui'])
+    expect(fetch).toHaveBeenCalledWith('/group')
   })
 
-  it('returns [] when backend returns an empty object', async () => {
-    mockFetch(true, {})
-    expect(await getAll()).toEqual([])
+  it('returns [] when backend returns empty list', async () => {
+    mockFetch(true, [])
+    expect(await getGroups()).toEqual([])
   })
 
   it('throws with status code when response is not ok', async () => {
     mockFetch(false, undefined, 500)
-    await expect(getAll()).rejects.toThrow('500')
+    await expect(getGroups()).rejects.toThrow('500')
   })
 })
 
-describe('create', () => {
-  it('calls POST /toggle/{name}?enabled=true', async () => {
+describe('createGroup', () => {
+  it('calls POST /group/{name}', async () => {
     mockFetch(true)
-    await create('my-flag', true)
-    expect(fetch).toHaveBeenCalledWith('/toggle/my-flag?enabled=true', { method: 'POST' })
+    await createGroup('payments')
+    expect(fetch).toHaveBeenCalledWith('/group/payments', { method: 'POST' })
   })
 
-  it('calls POST /toggle/{name}?enabled=false when disabled', async () => {
+  it('URL-encodes the group name', async () => {
     mockFetch(true)
-    await create('dark-mode', false)
-    expect(fetch).toHaveBeenCalledWith('/toggle/dark-mode?enabled=false', { method: 'POST' })
-  })
-
-  it('URL-encodes the toggle name', async () => {
-    mockFetch(true)
-    await create('my flag', true)
+    await createGroup('my group')
     const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
-    expect(url).toContain('my%20flag')
+    expect(url).toContain('my%20group')
   })
 
   it('throws when response is not ok', async () => {
     mockFetch(false, undefined, 409)
-    await expect(create('x', true)).rejects.toThrow('409')
+    await expect(createGroup('x')).rejects.toThrow('409')
+  })
+})
+
+describe('renameGroup', () => {
+  it('calls POST /group/{name}/rename?name={newName}', async () => {
+    mockFetch(true)
+    await renameGroup('old', 'new')
+    expect(fetch).toHaveBeenCalledWith('/group/old/rename?name=new', { method: 'POST' })
+  })
+
+  it('URL-encodes both names', async () => {
+    mockFetch(true)
+    await renameGroup('my group', 'new name')
+    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
+    expect(url).toContain('my%20group')
+    expect(url).toContain('new%20name')
+  })
+
+  it('throws when response is not ok', async () => {
+    mockFetch(false, undefined, 404)
+    await expect(renameGroup('x', 'y')).rejects.toThrow('404')
+  })
+})
+
+describe('deleteGroup', () => {
+  it('calls DELETE /group/{name}', async () => {
+    mockFetch(true)
+    await deleteGroup('payments')
+    expect(fetch).toHaveBeenCalledWith('/group/payments', { method: 'DELETE' })
+  })
+
+  it('throws when response is not ok', async () => {
+    mockFetch(false, undefined, 404)
+    await expect(deleteGroup('x')).rejects.toThrow('404')
+  })
+})
+
+describe('getToggles', () => {
+  it('calls GET /group/{group}/toggle and maps to Toggle[]', async () => {
+    mockFetch(true, { featureA: true, featureB: false })
+    const result = await getToggles('payments')
+    expect(result).toEqual([
+      { group: 'payments', name: 'featureA', enabled: true },
+      { group: 'payments', name: 'featureB', enabled: false },
+    ])
+    expect(fetch).toHaveBeenCalledWith('/group/payments/toggle')
+  })
+
+  it('returns [] when group has no toggles', async () => {
+    mockFetch(true, {})
+    expect(await getToggles('g')).toEqual([])
+  })
+
+  it('throws with status code when response is not ok', async () => {
+    mockFetch(false, undefined, 404)
+    await expect(getToggles('x')).rejects.toThrow('404')
+  })
+})
+
+describe('create', () => {
+  it('calls POST /group/{group}/toggle/{name}?enabled=true', async () => {
+    mockFetch(true)
+    await create('payments', 'checkout', true)
+    expect(fetch).toHaveBeenCalledWith(
+      '/group/payments/toggle/checkout?enabled=true',
+      { method: 'POST' }
+    )
+  })
+
+  it('URL-encodes group and toggle name', async () => {
+    mockFetch(true)
+    await create('my group', 'my flag', true)
+    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
+    expect(url).toContain('my%20group')
+    expect(url).toContain('my%20flag')
+  })
+
+  it('throws when response is not ok', async () => {
+    mockFetch(false, undefined, 400)
+    await expect(create('g', 'x', true)).rejects.toThrow('400')
   })
 })
 
 describe('enable', () => {
-  it('calls POST /toggle/{name}/enable', async () => {
+  it('calls POST /group/{group}/toggle/{name}/enable', async () => {
     mockFetch(true)
-    await enable('my-flag')
-    expect(fetch).toHaveBeenCalledWith('/toggle/my-flag/enable', { method: 'POST' })
-  })
-
-  it('URL-encodes the name', async () => {
-    mockFetch(true)
-    await enable('my flag')
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
-    expect(url).toContain('my%20flag')
+    await enable('payments', 'checkout')
+    expect(fetch).toHaveBeenCalledWith('/group/payments/toggle/checkout/enable', { method: 'POST' })
   })
 
   it('throws when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(enable('x')).rejects.toThrow('404')
+    await expect(enable('g', 'x')).rejects.toThrow('404')
   })
 })
 
 describe('disable', () => {
-  it('calls POST /toggle/{name}/disable', async () => {
+  it('calls POST /group/{group}/toggle/{name}/disable', async () => {
     mockFetch(true)
-    await disable('my-flag')
-    expect(fetch).toHaveBeenCalledWith('/toggle/my-flag/disable', { method: 'POST' })
-  })
-
-  it('URL-encodes the name', async () => {
-    mockFetch(true)
-    await disable('my flag')
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
-    expect(url).toContain('my%20flag')
+    await disable('payments', 'checkout')
+    expect(fetch).toHaveBeenCalledWith('/group/payments/toggle/checkout/disable', { method: 'POST' })
   })
 
   it('throws when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(disable('x')).rejects.toThrow('404')
+    await expect(disable('g', 'x')).rejects.toThrow('404')
   })
 })
 
 describe('remove', () => {
-  it('calls DELETE /toggle/{name}', async () => {
+  it('calls DELETE /group/{group}/toggle/{name}', async () => {
     mockFetch(true)
-    await remove('my-flag')
-    expect(fetch).toHaveBeenCalledWith('/toggle/my-flag', { method: 'DELETE' })
-  })
-
-  it('URL-encodes the name', async () => {
-    mockFetch(true)
-    await remove('my flag')
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
-    expect(url).toContain('my%20flag')
+    await remove('payments', 'checkout')
+    expect(fetch).toHaveBeenCalledWith('/group/payments/toggle/checkout', { method: 'DELETE' })
   })
 
   it('throws when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(remove('x')).rejects.toThrow('404')
+    await expect(remove('g', 'x')).rejects.toThrow('404')
   })
 })

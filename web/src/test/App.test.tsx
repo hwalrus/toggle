@@ -5,13 +5,18 @@ import App from '../App.tsx'
 
 vi.mock('../api.ts')
 
-const defaultToggles = [
-  { name: 'alpha', enabled: true },
-  { name: 'beta', enabled: false },
-]
+const defaultGroups = ['alpha', 'beta']
+const defaultToggles: Record<string, api.Toggle[]> = {
+  alpha: [{ group: 'alpha', name: 'feat1', enabled: true }],
+  beta:  [{ group: 'beta',  name: 'feat2', enabled: false }],
+}
 
 beforeEach(() => {
-  vi.mocked(api.getAll).mockResolvedValue(defaultToggles)
+  vi.mocked(api.getGroups).mockResolvedValue(defaultGroups)
+  vi.mocked(api.getToggles).mockImplementation(g => Promise.resolve(defaultToggles[g] ?? []))
+  vi.mocked(api.createGroup).mockResolvedValue(undefined)
+  vi.mocked(api.renameGroup).mockResolvedValue(undefined)
+  vi.mocked(api.deleteGroup).mockResolvedValue(undefined)
   vi.mocked(api.create).mockResolvedValue(undefined)
   vi.mocked(api.enable).mockResolvedValue(undefined)
   vi.mocked(api.disable).mockResolvedValue(undefined)
@@ -23,53 +28,60 @@ afterEach(() => {
 })
 
 describe('App', () => {
-  it('fetches toggles on mount and renders them', async () => {
+  it('fetches groups and toggles on mount and renders them', async () => {
+    render(<App />)
+    expect(await screen.findByText('feat1')).toBeInTheDocument()
+    expect(screen.getByText('feat2')).toBeInTheDocument()
+    expect(api.getGroups).toHaveBeenCalledTimes(1)
+    expect(api.getToggles).toHaveBeenCalledWith('alpha')
+    expect(api.getToggles).toHaveBeenCalledWith('beta')
+  })
+
+  it('shows group names as section headers', async () => {
     render(<App />)
     expect(await screen.findByText('alpha')).toBeInTheDocument()
     expect(screen.getByText('beta')).toBeInTheDocument()
-    expect(api.getAll).toHaveBeenCalledTimes(1)
   })
 
-  it('shows error banner when getAll fails', async () => {
-    vi.mocked(api.getAll).mockRejectedValue(new Error('Failed to fetch toggles: 503'))
+  it('shows error banner when getGroups fails', async () => {
+    vi.mocked(api.getGroups).mockRejectedValue(new Error('Failed to fetch groups: 503'))
     render(<App />)
     expect(await screen.findByText(/503/)).toBeInTheDocument()
-    expect(screen.queryByText('alpha')).not.toBeInTheDocument()
-  })
-
-  it('renders the "New toggle" form heading', async () => {
-    render(<App />)
-    await screen.findByText('alpha')
-    expect(screen.getByRole('heading', { name: /new toggle/i })).toBeInTheDocument()
   })
 
   it('shows loading indicator before the initial fetch resolves', async () => {
-    let resolve!: (v: typeof defaultToggles) => void
-    vi.mocked(api.getAll).mockReturnValueOnce(new Promise(r => { resolve = r }))
+    let resolve!: (v: string[]) => void
+    vi.mocked(api.getGroups).mockReturnValueOnce(new Promise(r => { resolve = r }))
     render(<App />)
     expect(screen.getByText('Loading…')).toBeInTheDocument()
-    expect(screen.queryByText(/No toggles yet/)).not.toBeInTheDocument()
-    resolve(defaultToggles)
-    expect(await screen.findByText('alpha')).toBeInTheDocument()
+    resolve(defaultGroups)
+    expect(await screen.findByText('feat1')).toBeInTheDocument()
   })
 
-  it('shows empty-state message when getAll returns []', async () => {
-    vi.mocked(api.getAll).mockResolvedValue([])
+  it('shows empty-state message when there are no groups', async () => {
+    vi.mocked(api.getGroups).mockResolvedValue([])
     render(<App />)
-    expect(await screen.findByText('No toggles yet. Add one above.')).toBeInTheDocument()
+    expect(await screen.findByText('No groups yet. Add one above.')).toBeInTheDocument()
   })
 
-  it('adding a toggle calls create, refreshes the list, and shows the new toggle', async () => {
-    vi.mocked(api.getAll)
-      .mockResolvedValueOnce(defaultToggles)
-      .mockResolvedValueOnce([...defaultToggles, { name: 'gamma', enabled: true }])
+  it('renders the "New group" form heading', async () => {
+    render(<App />)
+    await screen.findByText('feat1')
+    expect(screen.getByRole('heading', { name: /new group/i })).toBeInTheDocument()
+  })
+
+  it('adding a group calls createGroup and refreshes', async () => {
+    vi.mocked(api.getGroups)
+      .mockResolvedValueOnce(defaultGroups)
+      .mockResolvedValueOnce([...defaultGroups, 'gamma'])
+    vi.mocked(api.getToggles).mockResolvedValue([])
     const user = userEvent.setup()
     render(<App />)
     await screen.findByText('alpha')
-    await user.type(screen.getByPlaceholderText('toggle-name'), 'gamma')
-    await user.click(screen.getByRole('button', { name: /add/i }))
-    expect(api.create).toHaveBeenCalledWith('gamma', true)
-    expect(api.getAll).toHaveBeenCalledTimes(2)
+    await user.type(screen.getByPlaceholderText('group-name'), 'gamma')
+    await user.click(screen.getByRole('button', { name: /add group/i }))
+    expect(api.createGroup).toHaveBeenCalledWith('gamma')
+    expect(api.getGroups).toHaveBeenCalledTimes(2)
     expect(await screen.findByText('gamma')).toBeInTheDocument()
   })
 })

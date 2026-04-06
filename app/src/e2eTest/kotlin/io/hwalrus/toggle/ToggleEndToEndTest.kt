@@ -42,93 +42,171 @@ class ToggleEndToEndTest : DescribeSpec({
 
     fun Response.bodyText(): String = checkNotNull(body).string()
 
-    describe("GET /toggle") {
-        it("returns an empty JSON object when no toggles exist") {
-            get("/toggle").use { response ->
+    describe("GET /group") {
+        it("returns empty list when no groups exist") {
+            get("/group").use { response ->
                 response.code shouldBe 200
-                Jackson.parse(response.bodyText()) shouldBe Jackson.parse("{}")
+                Jackson.parse(response.bodyText()) shouldBe Jackson.parse("[]")
+            }
+        }
+
+        it("returns sorted list of groups") {
+            post("/group/beta").use { it.code shouldBe 201 }
+            post("/group/alpha").use { it.code shouldBe 201 }
+            get("/group").use { response ->
+                response.code shouldBe 200
+                Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""["alpha","beta"]""")
             }
         }
     }
 
-    describe("POST /toggle/{name}") {
+    describe("POST /group/{group}") {
         it("returns 201 Created with a Location header") {
-            post("/toggle/feature?enabled=true").use { response ->
+            post("/group/payments").use { response ->
                 response.code shouldBe 201
-                response.header("Location") shouldBe "/toggle/feature"
+                response.header("Location") shouldBe "/group/payments"
+            }
+        }
+
+        it("returns 409 when group already exists") {
+            post("/group/payments").use { it.code shouldBe 201 }
+            post("/group/payments").use { it.code shouldBe 409 }
+        }
+    }
+
+    describe("POST /group/{group}/rename") {
+        it("renames a group") {
+            post("/group/old").use { it.code shouldBe 201 }
+            post("/group/old/rename?name=new").use { it.code shouldBe 200 }
+            get("/group").use { response ->
+                Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""["new"]""")
+            }
+        }
+
+        it("returns 404 for an unknown group") {
+            post("/group/unknown/rename?name=new").use { it.code shouldBe 404 }
+        }
+    }
+
+    describe("DELETE /group/{group}") {
+        it("deletes an existing group") {
+            post("/group/payments").use { it.code shouldBe 201 }
+            delete("/group/payments").use { it.code shouldBe 200 }
+            get("/group").use { response ->
+                Jackson.parse(response.bodyText()) shouldBe Jackson.parse("[]")
+            }
+        }
+
+        it("returns 404 for an unknown group") {
+            delete("/group/unknown").use { it.code shouldBe 404 }
+        }
+    }
+
+    describe("GET /group/{group}/toggle") {
+        it("returns an empty JSON object when the group has no toggles") {
+            post("/group/g").use { it.code shouldBe 201 }
+            get("/group/g/toggle").use { response ->
+                response.code shouldBe 200
+                Jackson.parse(response.bodyText()) shouldBe Jackson.parse("{}")
+            }
+        }
+
+        it("returns 404 for an unknown group") {
+            get("/group/unknown/toggle").use { it.code shouldBe 404 }
+        }
+    }
+
+    describe("POST /group/{group}/toggle/{name}") {
+        it("returns 201 Created with a Location header") {
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature?enabled=true").use { response ->
+                response.code shouldBe 201
+                response.header("Location") shouldBe "/group/g/toggle/feature"
             }
         }
 
         it("adds an enabled toggle") {
-            post("/toggle/feature?enabled=true").use { it.code shouldBe 201 }
-            get("/toggle/feature").use { response ->
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature?enabled=true").use { it.code shouldBe 201 }
+            get("/group/g/toggle/feature").use { response ->
                 response.code shouldBe 200
                 Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":true}""")
             }
         }
 
         it("adds a disabled toggle") {
-            post("/toggle/feature?enabled=false").use { it.code shouldBe 201 }
-            get("/toggle/feature").use { response ->
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature?enabled=false").use { it.code shouldBe 201 }
+            get("/group/g/toggle/feature").use { response ->
                 response.code shouldBe 200
                 Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":false}""")
             }
         }
-    }
 
-    describe("GET /toggle/{name}") {
-        it("returns 404 for an unknown toggle") {
-            get("/toggle/feature").use { response ->
-                response.code shouldBe 404
-            }
+        it("returns 404 when group does not exist") {
+            post("/group/nogroup/toggle/feature?enabled=true").use { it.code shouldBe 404 }
         }
     }
 
-    describe("POST /toggle/{name}/enable") {
+    describe("GET /group/{group}/toggle/{name}") {
+        it("returns 404 for an unknown toggle") {
+            post("/group/g").use { it.code shouldBe 201 }
+            get("/group/g/toggle/feature").use { it.code shouldBe 404 }
+        }
+    }
+
+    describe("POST /group/{group}/toggle/{name}/enable") {
         it("enables a disabled toggle") {
-            post("/toggle/feature?enabled=false").use { it.code shouldBe 201 }
-            post("/toggle/feature/enable").use { it.code shouldBe 200 }
-            get("/toggle/feature").use { response ->
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature?enabled=false").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature/enable").use { it.code shouldBe 200 }
+            get("/group/g/toggle/feature").use { response ->
                 Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":true}""")
             }
         }
 
         it("returns 404 for an unknown toggle") {
-            post("/toggle/feature/enable").use { it.code shouldBe 404 }
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature/enable").use { it.code shouldBe 404 }
         }
     }
 
-    describe("POST /toggle/{name}/disable") {
+    describe("POST /group/{group}/toggle/{name}/disable") {
         it("disables an enabled toggle") {
-            post("/toggle/feature?enabled=true").use { it.code shouldBe 201 }
-            post("/toggle/feature/disable").use { it.code shouldBe 200 }
-            get("/toggle/feature").use { response ->
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature?enabled=true").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature/disable").use { it.code shouldBe 200 }
+            get("/group/g/toggle/feature").use { response ->
                 Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"enabled":false}""")
             }
         }
 
         it("returns 404 for an unknown toggle") {
-            post("/toggle/feature/disable").use { it.code shouldBe 404 }
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature/disable").use { it.code shouldBe 404 }
         }
     }
 
-    describe("DELETE /toggle/{name}") {
+    describe("DELETE /group/{group}/toggle/{name}") {
         it("deletes an existing toggle") {
-            post("/toggle/feature?enabled=true").use { it.code shouldBe 201 }
-            delete("/toggle/feature").use { it.code shouldBe 200 }
-            delete("/toggle/feature").use { it.code shouldBe 404 }
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/feature?enabled=true").use { it.code shouldBe 201 }
+            delete("/group/g/toggle/feature").use { it.code shouldBe 200 }
+            delete("/group/g/toggle/feature").use { it.code shouldBe 404 }
         }
 
         it("returns 404 for an unknown toggle") {
-            delete("/toggle/feature").use { it.code shouldBe 404 }
+            post("/group/g").use { it.code shouldBe 201 }
+            delete("/group/g/toggle/feature").use { it.code shouldBe 404 }
         }
     }
 
-    describe("GET /toggle (all)") {
-        it("returns all toggles") {
-            post("/toggle/a?enabled=true").use { it.code shouldBe 201 }
-            post("/toggle/b?enabled=false").use { it.code shouldBe 201 }
-            get("/toggle").use { response ->
+    describe("GET /group/{group}/toggle (all)") {
+        it("returns all toggles in the group") {
+            post("/group/g").use { it.code shouldBe 201 }
+            post("/group/g/toggle/a?enabled=true").use { it.code shouldBe 201 }
+            post("/group/g/toggle/b?enabled=false").use { it.code shouldBe 201 }
+            get("/group/g/toggle").use { response ->
                 Jackson.parse(response.bodyText()) shouldBe Jackson.parse("""{"a":true,"b":false}""")
             }
         }

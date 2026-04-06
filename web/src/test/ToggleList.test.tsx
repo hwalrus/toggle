@@ -16,8 +16,8 @@ afterEach(() => {
 })
 
 const toggles: Toggle[] = [
-  { name: 'alpha', enabled: true },
-  { name: 'beta', enabled: false },
+  { group: 'g', name: 'alpha', enabled: true },
+  { group: 'g', name: 'beta',  enabled: false },
 ]
 
 describe('ToggleList', () => {

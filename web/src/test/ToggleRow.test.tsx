@@ -6,7 +6,7 @@ import type { Toggle } from '../api.ts'
 
 vi.mock('../api.ts')
 
-const tog = (name: string, enabled: boolean): Toggle => ({ name, enabled })
+const tog = (name: string, enabled: boolean): Toggle => ({ group: 'g', name, enabled })
 
 beforeEach(() => {
   vi.mocked(api.enable).mockResolvedValue(undefined)
@@ -36,7 +36,6 @@ describe('ToggleRow — display', () => {
 
   it('switch checkbox is checked for an enabled toggle', () => {
     render(<ToggleRow toggle={tog('feature-x', true)} onChanged={vi.fn()} />)
-    // The switch input is unlabelled — find it by role within the switch label
     const checkboxes = screen.getAllByRole('checkbox')
     expect(checkboxes[0]).toBeChecked()
   })
@@ -55,22 +54,22 @@ describe('ToggleRow — display', () => {
 })
 
 describe('ToggleRow — toggling enabled/disabled', () => {
-  it('clicking switch on an enabled toggle calls disable(name) then onChanged', async () => {
+  it('clicking switch on an enabled toggle calls disable(group, name) then onChanged', async () => {
     const user = userEvent.setup()
     const onChanged = vi.fn()
     render(<ToggleRow toggle={tog('feature-x', true)} onChanged={onChanged} />)
     await user.click(screen.getAllByRole('checkbox')[0])
-    expect(api.disable).toHaveBeenCalledWith('feature-x')
+    expect(api.disable).toHaveBeenCalledWith('g', 'feature-x')
     expect(api.enable).not.toHaveBeenCalled()
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 
-  it('clicking switch on a disabled toggle calls enable(name) then onChanged', async () => {
+  it('clicking switch on a disabled toggle calls enable(group, name) then onChanged', async () => {
     const user = userEvent.setup()
     const onChanged = vi.fn()
     render(<ToggleRow toggle={tog('feature-x', false)} onChanged={onChanged} />)
     await user.click(screen.getAllByRole('checkbox')[0])
-    expect(api.enable).toHaveBeenCalledWith('feature-x')
+    expect(api.enable).toHaveBeenCalledWith('g', 'feature-x')
     expect(api.disable).not.toHaveBeenCalled()
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
@@ -105,13 +104,13 @@ describe('ToggleRow — delete confirmation flow', () => {
     expect(screen.getByTitle('Delete')).toBeInTheDocument()
   })
 
-  it('clicking Yes calls remove(name) then onChanged', async () => {
+  it('clicking Yes calls remove(group, name) then onChanged', async () => {
     const user = userEvent.setup()
     const onChanged = vi.fn()
     render(<ToggleRow toggle={tog('feature-x', true)} onChanged={onChanged} />)
     await user.click(screen.getByTitle('Delete'))
     await user.click(screen.getByRole('button', { name: /yes/i }))
-    expect(api.remove).toHaveBeenCalledWith('feature-x')
+    expect(api.remove).toHaveBeenCalledWith('g', 'feature-x')
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 

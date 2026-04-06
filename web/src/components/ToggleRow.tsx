@@ -12,8 +12,8 @@ export default function ToggleRow({ toggle, onChanged }: Props) {
     setBusy(true)
     setError(null)
     try {
-      if (toggle.enabled) await disable(toggle.name)
-      else await enable(toggle.name)
+      if (toggle.enabled) await disable(toggle.group, toggle.name)
+      else await enable(toggle.group, toggle.name)
       onChanged()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed')
@@ -30,7 +30,7 @@ export default function ToggleRow({ toggle, onChanged }: Props) {
     setBusy(true)
     setError(null)
     try {
-      await remove(toggle.name)
+      await remove(toggle.group, toggle.name)
       onChanged()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed')

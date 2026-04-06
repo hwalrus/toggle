@@ -1,16 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getAll, Toggle } from './api.ts'
-import AddToggleForm from './components/AddToggleForm.tsx'
-import ToggleList from './components/ToggleList.tsx'
+import { getGroups, getToggles, Toggle } from './api.ts'
+import AddGroupForm from './components/AddGroupForm.tsx'
+import GroupSection from './components/GroupSection.tsx'
 
 export default function App() {
-  const [toggles, setToggles] = useState<Toggle[]>([])
+  const [groups, setGroups] = useState<string[]>([])
+  const [togglesByGroup, setTogglesByGroup] = useState<Record<string, Toggle[]>>({})
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     try {
-      setToggles(await getAll())
+      const fetchedGroups = await getGroups()
+      const toggleArrays = await Promise.all(fetchedGroups.map(g => getToggles(g)))
+      const byGroup: Record<string, Toggle[]> = {}
+      fetchedGroups.forEach((g, i) => { byGroup[g] = toggleArrays[i] })
+      setGroups(fetchedGroups)
+      setTogglesByGroup(byGroup)
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
@@ -28,12 +34,25 @@ export default function App() {
       </header>
       <main className="main">
         <div className="card">
-          <AddToggleForm onCreated={refresh} />
+          <AddGroupForm onCreated={refresh} />
         </div>
         {error && <div className="error-banner" role="alert">{error}</div>}
-        <div className="card">
-          <ToggleList toggles={toggles} loading={loading} onChanged={refresh} />
-        </div>
+        {!loading && groups.length === 0 && (
+          <p className="empty-state">No groups yet. Add one above.</p>
+        )}
+        {loading && groups.length === 0 && (
+          <p className="empty-state">Loading…</p>
+        )}
+        {groups.map(group => (
+          <GroupSection
+            key={group}
+            group={group}
+            toggles={togglesByGroup[group] ?? []}
+            loading={loading}
+            onGroupChanged={refresh}
+            onToggleChanged={refresh}
+          />
+        ))}
       </main>
     </div>
   )

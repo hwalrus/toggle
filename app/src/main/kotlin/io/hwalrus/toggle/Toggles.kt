@@ -23,6 +23,7 @@ private val namePattern = Regex("^[a-zA-Z0-9_-]{1,100}$")
 
 private data class ToggleState(val enabled: Boolean)
 
+private val groupName = Path.of("group")
 private val toggleName = Path.of("name")
 private val toggleEnabled = Query.boolean().required("enabled")
 private val allTogglesBody = autoBody<Map<String, Boolean>>().toLens()
@@ -34,28 +35,33 @@ private fun StoreResult.toResponse() = when (this) {
 }
 
 fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
-    "" bind GET to {
-        Response(OK).with(allTogglesBody of store.getAll())
+    "" bind GET to { req ->
+        val group = groupName(req)
+        val toggles = store.getAll(group) ?: return@to Response(NOT_FOUND)
+        Response(OK).with(allTogglesBody of toggles)
     },
     "/{name}" bind POST to { req ->
+        val group = groupName(req)
         val name = toggleName(req)
         if (!namePattern.matches(name)) return@to Response(BAD_REQUEST)
-        store.add(name, toggleEnabled(req))
-        Response(CREATED).with(LOCATION of Uri.of("/toggle/$name"))
+        when (store.add(group, name, toggleEnabled(req))) {
+            StoreResult.Success -> Response(CREATED).with(LOCATION of Uri.of("/group/$group/toggle/$name"))
+            StoreResult.NotFound -> Response(NOT_FOUND)
+        }
     },
     "/{name}" bind GET to { req ->
-        when (val result = store.get(toggleName(req))) {
+        when (val result = store.get(groupName(req), toggleName(req))) {
             GetResult.NotFound -> Response(NOT_FOUND)
             is GetResult.Found -> Response(OK).with(toggleStateBody of ToggleState(result.enabled))
         }
     },
     "/{name}/enable" bind POST to { req ->
-        store.enable(toggleName(req)).toResponse()
+        store.enable(groupName(req), toggleName(req)).toResponse()
     },
     "/{name}/disable" bind POST to { req ->
-        store.disable(toggleName(req)).toResponse()
+        store.disable(groupName(req), toggleName(req)).toResponse()
     },
     "/{name}" bind DELETE to { req ->
-        store.delete(toggleName(req)).toResponse()
+        store.delete(groupName(req), toggleName(req)).toResponse()
     }
 )

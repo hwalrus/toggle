@@ -5,153 +5,223 @@ import io.kotest.matchers.shouldBe
 
 class InMemoryToggleStoreTest : DescribeSpec({
     describe("InMemoryToggleStore") {
+        describe("addGroup") {
+            it("returns Created on first add") {
+                InMemoryToggleStore().addGroup("g") shouldBe GroupResult.Created
+            }
+
+            it("returns AlreadyExists when group already present") {
+                val store = InMemoryToggleStore()
+                store.addGroup("g")
+                store.addGroup("g") shouldBe GroupResult.AlreadyExists
+            }
+        }
+
+        describe("getGroups") {
+            it("returns empty list when no groups exist") {
+                InMemoryToggleStore().getGroups() shouldBe emptyList()
+            }
+
+            it("returns sorted group names") {
+                val store = InMemoryToggleStore()
+                store.addGroup("beta")
+                store.addGroup("alpha")
+                store.getGroups() shouldBe listOf("alpha", "beta")
+            }
+        }
+
+        describe("renameGroup") {
+            it("returns NotFound for an unknown group") {
+                InMemoryToggleStore().renameGroup("unknown", "new") shouldBe StoreResult.NotFound
+            }
+
+            it("renames the group and preserves its toggles") {
+                val store = InMemoryToggleStore()
+                store.addGroup("old")
+                store.add("old", "feat", true)
+                store.renameGroup("old", "new") shouldBe StoreResult.Success
+                store.getGroups() shouldBe listOf("new")
+                store.get("new", "feat") shouldBe GetResult.Found(true)
+                store.get("old", "feat") shouldBe GetResult.NotFound
+            }
+        }
+
+        describe("deleteGroup") {
+            it("returns NotFound for an unknown group") {
+                InMemoryToggleStore().deleteGroup("unknown") shouldBe StoreResult.NotFound
+            }
+
+            it("deletes the group and its toggles") {
+                val store = InMemoryToggleStore()
+                store.addGroup("g")
+                store.add("g", "feat", true)
+                store.deleteGroup("g") shouldBe StoreResult.Success
+                store.getGroups() shouldBe emptyList()
+                store.get("g", "feat") shouldBe GetResult.NotFound
+            }
+        }
+
         describe("getAll") {
-            it("returns an empty map when no toggles exist") {
-                InMemoryToggleStore().getAll() shouldBe emptyMap()
+            it("returns null for an unknown group") {
+                InMemoryToggleStore().getAll("unknown") shouldBe null
             }
 
-            it("returns all added toggles") {
+            it("returns empty map for a group with no toggles") {
                 val store = InMemoryToggleStore()
-                store.add("a", true)
-                store.add("b", false)
-                store.getAll() shouldBe mapOf("a" to true, "b" to false)
+                store.addGroup("g")
+                store.getAll("g") shouldBe emptyMap()
             }
 
-            it("reflects the latest state after updates") {
+            it("returns all toggles in the group") {
                 val store = InMemoryToggleStore()
-                store.add("a", true)
-                store.disable("a")
-                store.getAll() shouldBe mapOf("a" to false)
+                store.addGroup("g")
+                store.add("g", "a", true)
+                store.add("g", "b", false)
+                store.getAll("g") shouldBe mapOf("a" to true, "b" to false)
             }
 
             it("does not include deleted toggles") {
                 val store = InMemoryToggleStore()
-                store.add("a", true)
-                store.add("b", false)
-                store.delete("a")
-                store.getAll() shouldBe mapOf("b" to false)
+                store.addGroup("g")
+                store.add("g", "a", true)
+                store.add("g", "b", false)
+                store.delete("g", "a")
+                store.getAll("g") shouldBe mapOf("b" to false)
+            }
+
+            it("groups are independent") {
+                val store = InMemoryToggleStore()
+                store.addGroup("g1")
+                store.addGroup("g2")
+                store.add("g1", "feat", true)
+                store.getAll("g1") shouldBe mapOf("feat" to true)
+                store.getAll("g2") shouldBe emptyMap()
             }
         }
 
         describe("get") {
-            it("returns NotFound for an unknown toggle") {
-                InMemoryToggleStore().get("unknown") shouldBe GetResult.NotFound
+            it("returns NotFound for an unknown group") {
+                InMemoryToggleStore().get("unknown", "feat") shouldBe GetResult.NotFound
             }
 
-            it("returns Found with enabled=true for an enabled toggle") {
+            it("returns NotFound for an unknown toggle within a group") {
                 val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.get("feature") shouldBe GetResult.Found(true)
+                store.addGroup("g")
+                store.get("g", "unknown") shouldBe GetResult.NotFound
             }
 
-            it("returns Found with enabled=false for a disabled toggle") {
+            it("returns Found with enabled=true") {
                 val store = InMemoryToggleStore()
-                store.add("feature", false)
-                store.get("feature") shouldBe GetResult.Found(false)
+                store.addGroup("g")
+                store.add("g", "feat", true)
+                store.get("g", "feat") shouldBe GetResult.Found(true)
+            }
+
+            it("returns Found with enabled=false") {
+                val store = InMemoryToggleStore()
+                store.addGroup("g")
+                store.add("g", "feat", false)
+                store.get("g", "feat") shouldBe GetResult.Found(false)
             }
         }
 
         describe("add") {
-            it("stores an enabled toggle") {
-                val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.get("feature") shouldBe GetResult.Found(true)
+            it("returns NotFound when the group does not exist") {
+                InMemoryToggleStore().add("unknown", "feat", true) shouldBe StoreResult.NotFound
             }
 
-            it("stores a disabled toggle") {
+            it("adds a toggle and returns Success") {
                 val store = InMemoryToggleStore()
-                store.add("feature", false)
-                store.get("feature") shouldBe GetResult.Found(false)
+                store.addGroup("g")
+                store.add("g", "feat", true) shouldBe StoreResult.Success
+                store.get("g", "feat") shouldBe GetResult.Found(true)
             }
 
-            it("overwrites an enabled toggle with disabled") {
+            it("same name can exist in different groups") {
                 val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.add("feature", false)
-                store.get("feature") shouldBe GetResult.Found(false)
+                store.addGroup("g1")
+                store.addGroup("g2")
+                store.add("g1", "feat", true)
+                store.add("g2", "feat", false)
+                store.get("g1", "feat") shouldBe GetResult.Found(true)
+                store.get("g2", "feat") shouldBe GetResult.Found(false)
             }
 
-            it("overwrites a disabled toggle with enabled") {
+            it("overwrites an existing toggle") {
                 val store = InMemoryToggleStore()
-                store.add("feature", false)
-                store.add("feature", true)
-                store.get("feature") shouldBe GetResult.Found(true)
-            }
-
-            it("toggles are independent of each other") {
-                val store = InMemoryToggleStore()
-                store.add("a", true)
-                store.add("b", false)
-                store.get("a") shouldBe GetResult.Found(true)
-                store.get("b") shouldBe GetResult.Found(false)
+                store.addGroup("g")
+                store.add("g", "feat", true)
+                store.add("g", "feat", false)
+                store.get("g", "feat") shouldBe GetResult.Found(false)
             }
         }
 
         describe("enable") {
+            it("returns NotFound for an unknown group") {
+                InMemoryToggleStore().enable("unknown", "feat") shouldBe StoreResult.NotFound
+            }
+
             it("returns NotFound for an unknown toggle") {
-                InMemoryToggleStore().enable("unknown") shouldBe StoreResult.NotFound
+                val store = InMemoryToggleStore()
+                store.addGroup("g")
+                store.enable("g", "unknown") shouldBe StoreResult.NotFound
             }
 
-            it("returns Success and enables a disabled toggle") {
+            it("enables a disabled toggle") {
                 val store = InMemoryToggleStore()
-                store.add("feature", false)
-                store.enable("feature") shouldBe StoreResult.Success
-                store.get("feature") shouldBe GetResult.Found(true)
-            }
-
-            it("returns Success when toggle is already enabled") {
-                val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.enable("feature") shouldBe StoreResult.Success
-                store.get("feature") shouldBe GetResult.Found(true)
+                store.addGroup("g")
+                store.add("g", "feat", false)
+                store.enable("g", "feat") shouldBe StoreResult.Success
+                store.get("g", "feat") shouldBe GetResult.Found(true)
             }
         }
 
         describe("disable") {
+            it("returns NotFound for an unknown group") {
+                InMemoryToggleStore().disable("unknown", "feat") shouldBe StoreResult.NotFound
+            }
+
             it("returns NotFound for an unknown toggle") {
-                InMemoryToggleStore().disable("unknown") shouldBe StoreResult.NotFound
+                val store = InMemoryToggleStore()
+                store.addGroup("g")
+                store.disable("g", "unknown") shouldBe StoreResult.NotFound
             }
 
-            it("returns Success and disables an enabled toggle") {
+            it("disables an enabled toggle") {
                 val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.disable("feature") shouldBe StoreResult.Success
-                store.get("feature") shouldBe GetResult.Found(false)
-            }
-
-            it("returns Success when toggle is already disabled") {
-                val store = InMemoryToggleStore()
-                store.add("feature", false)
-                store.disable("feature") shouldBe StoreResult.Success
-                store.get("feature") shouldBe GetResult.Found(false)
+                store.addGroup("g")
+                store.add("g", "feat", true)
+                store.disable("g", "feat") shouldBe StoreResult.Success
+                store.get("g", "feat") shouldBe GetResult.Found(false)
             }
         }
 
         describe("delete") {
+            it("returns NotFound for an unknown group") {
+                InMemoryToggleStore().delete("unknown", "feat") shouldBe StoreResult.NotFound
+            }
+
             it("returns NotFound for an unknown toggle") {
-                InMemoryToggleStore().delete("unknown") shouldBe StoreResult.NotFound
+                val store = InMemoryToggleStore()
+                store.addGroup("g")
+                store.delete("g", "unknown") shouldBe StoreResult.NotFound
             }
 
-            it("returns Success and removes an existing toggle") {
+            it("deletes an existing toggle") {
                 val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.delete("feature") shouldBe StoreResult.Success
-                store.get("feature") shouldBe GetResult.NotFound
-            }
-
-            it("toggle is no longer accessible after deletion") {
-                val store = InMemoryToggleStore()
-                store.add("feature", true)
-                store.delete("feature")
-                store.delete("feature") shouldBe StoreResult.NotFound
+                store.addGroup("g")
+                store.add("g", "feat", true)
+                store.delete("g", "feat") shouldBe StoreResult.Success
+                store.get("g", "feat") shouldBe GetResult.NotFound
             }
 
             it("deleting one toggle does not affect others") {
                 val store = InMemoryToggleStore()
-                store.add("a", true)
-                store.add("b", true)
-                store.delete("a")
-                store.get("b") shouldBe GetResult.Found(true)
+                store.addGroup("g")
+                store.add("g", "a", true)
+                store.add("g", "b", true)
+                store.delete("g", "a")
+                store.get("g", "b") shouldBe GetResult.Found(true)
             }
         }
     }
