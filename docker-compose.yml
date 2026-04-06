@@ -4,3 +4,8 @@ services:
     ports:
       - "10800:10800"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
