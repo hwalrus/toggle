@@ -6,57 +6,37 @@ class InMemoryToggleStore : ToggleStore {
     private val store = AtomicReference(emptyMap<String, Map<String, Boolean>>())
 
     override fun addGroup(group: String): GroupResult {
-        var result: GroupResult = GroupResult.AlreadyExists
-        store.updateAndGet { current ->
-            if (group in current) {
-                current
-            } else {
-                result = GroupResult.Created
-                current + (group to emptyMap())
-            }
+        while (true) {
+            val current = store.get()
+            if (group in current) return GroupResult.AlreadyExists
+            if (store.compareAndSet(current, current + (group to emptyMap()))) return GroupResult.Created
         }
-        return result
     }
 
     override fun renameGroup(group: String, newName: String): StoreResult {
-        var result: StoreResult = StoreResult.NotFound
-        store.updateAndGet { current ->
-            if (group !in current) {
-                current
-            } else {
-                result = StoreResult.Success
-                (current - group) + (newName to current.getValue(group))
-            }
+        while (true) {
+            val current = store.get()
+            if (group !in current) return StoreResult.NotFound
+            if (store.compareAndSet(current, (current - group) + (newName to current.getValue(group)))) return StoreResult.Success
         }
-        return result
     }
 
     override fun deleteGroup(group: String): StoreResult {
-        var existed = false
-        store.updateAndGet { current ->
-            if (group in current) {
-                existed = true
-                current - group
-            } else {
-                current
-            }
+        while (true) {
+            val current = store.get()
+            if (group !in current) return StoreResult.NotFound
+            if (store.compareAndSet(current, current - group)) return StoreResult.Success
         }
-        return if (existed) StoreResult.Success else StoreResult.NotFound
     }
 
     override fun getGroups(): List<String> = store.get().keys.sorted()
 
     override fun add(group: String, name: String, enabled: Boolean): StoreResult {
-        var result: StoreResult = StoreResult.NotFound
-        store.updateAndGet { current ->
-            if (group !in current) {
-                current
-            } else {
-                result = StoreResult.Success
-                current + (group to (current.getValue(group) + (name to enabled)))
-            }
+        while (true) {
+            val current = store.get()
+            if (group !in current) return StoreResult.NotFound
+            if (store.compareAndSet(current, current + (group to (current.getValue(group) + (name to enabled))))) return StoreResult.Success
         }
-        return result
     }
 
     override fun get(group: String, name: String): GetResult {
@@ -71,17 +51,12 @@ class InMemoryToggleStore : ToggleStore {
     override fun disable(group: String, name: String): StoreResult = update(group, name, false)
 
     override fun delete(group: String, name: String): StoreResult {
-        var existed = false
-        store.updateAndGet { current ->
-            val toggles = current[group] ?: return@updateAndGet current
-            if (name !in toggles) {
-                current
-            } else {
-                existed = true
-                current + (group to (toggles - name))
-            }
+        while (true) {
+            val current = store.get()
+            val toggles = current[group] ?: return StoreResult.NotFound
+            if (name !in toggles) return StoreResult.NotFound
+            if (store.compareAndSet(current, current + (group to (toggles - name)))) return StoreResult.Success
         }
-        return if (existed) StoreResult.Success else StoreResult.NotFound
     }
 
     override fun clear() {
@@ -89,16 +64,11 @@ class InMemoryToggleStore : ToggleStore {
     }
 
     private fun update(group: String, name: String, enabled: Boolean): StoreResult {
-        var existed = false
-        store.updateAndGet { current ->
-            val toggles = current[group] ?: return@updateAndGet current
-            if (name !in toggles) {
-                current
-            } else {
-                existed = true
-                current + (group to (toggles + (name to enabled)))
-            }
+        while (true) {
+            val current = store.get()
+            val toggles = current[group] ?: return StoreResult.NotFound
+            if (name !in toggles) return StoreResult.NotFound
+            if (store.compareAndSet(current, current + (group to (toggles + (name to enabled))))) return StoreResult.Success
         }
-        return if (existed) StoreResult.Success else StoreResult.NotFound
     }
 }
