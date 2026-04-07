@@ -7,7 +7,6 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.CONFLICT
 import org.http4k.core.Status.Companion.CREATED
-import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Uri
 import org.http4k.core.with
@@ -18,6 +17,11 @@ import org.http4k.lens.Query
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
+
+private fun GroupResult.toResponse(group: String) = when (this) {
+    GroupResult.Created -> Response(CREATED).with(LOCATION of Uri.of("/group/$group"))
+    GroupResult.AlreadyExists -> Response(CONFLICT)
+}
 
 private val groupName = Path.of("group")
 private val newName = Query.required("name")
@@ -30,24 +34,15 @@ fun groupRoutes(store: ToggleStore): RoutingHttpHandler = routes(
     "/{group}" bind POST to { req ->
         val group = groupName(req)
         if (!namePattern.matches(group)) return@to Response(BAD_REQUEST)
-        when (store.addGroup(group)) {
-            GroupResult.Created -> Response(CREATED).with(LOCATION of Uri.of("/group/$group"))
-            GroupResult.AlreadyExists -> Response(CONFLICT)
-        }
+        store.addGroup(group).toResponse(group)
     },
     "/{group}" bind DELETE to { req ->
-        when (store.deleteGroup(groupName(req))) {
-            StoreResult.Success -> Response(OK)
-            StoreResult.NotFound -> Response(NOT_FOUND)
-        }
+        store.deleteGroup(groupName(req)).toResponse()
     },
     "/{group}/rename" bind POST to { req ->
         val renamed = newName(req)
         if (!namePattern.matches(renamed)) return@to Response(BAD_REQUEST)
-        when (store.renameGroup(groupName(req), renamed)) {
-            StoreResult.Success -> Response(OK)
-            StoreResult.NotFound -> Response(NOT_FOUND)
-        }
+        store.renameGroup(groupName(req), renamed).toResponse()
     },
     "/{group}/toggle" bind toggleRoutes(store)
 )

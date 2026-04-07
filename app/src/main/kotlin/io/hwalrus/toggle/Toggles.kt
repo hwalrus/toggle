@@ -27,7 +27,7 @@ private val toggleEnabled = Query.boolean().required("enabled")
 private val allTogglesBody = autoBody<Map<String, Boolean>>().toLens()
 private val toggleStateBody = autoBody<ToggleState>().toLens()
 
-private fun StoreResult.toResponse() = when (this) {
+internal fun StoreResult.toResponse() = when (this) {
     StoreResult.Success -> Response(OK)
     StoreResult.NotFound -> Response(NOT_FOUND)
 }
