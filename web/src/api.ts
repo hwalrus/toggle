@@ -1,5 +1,7 @@
 export type Toggle = { group: string; name: string; enabled: boolean }
 
+export const namePattern = /^[a-zA-Z0-9_-]{1,100}$/
+
 // ── Groups ────────────────────────────────────────────────────────────────────
 
 export async function getGroups(): Promise<string[]> {

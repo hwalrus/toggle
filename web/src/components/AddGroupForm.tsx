@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react'
-import { createGroup } from '../api.ts'
+import { createGroup, namePattern } from '../api.ts'
 
 type Props = { onCreated: () => void }
 
@@ -8,7 +8,7 @@ export default function AddGroupForm({ onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const valid = /^[a-zA-Z0-9_-]{1,100}$/.test(name)
+  const valid = namePattern.test(name)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()

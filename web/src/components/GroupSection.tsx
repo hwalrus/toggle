@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Toggle, renameGroup, deleteGroup } from '../api.ts'
+import { Toggle, renameGroup, deleteGroup, namePattern } from '../api.ts'
 import AddToggleForm from './AddToggleForm.tsx'
 import ToggleList from './ToggleList.tsx'
 
@@ -18,7 +18,7 @@ export default function GroupSection({ group, toggles, loading, onGroupChanged, 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const renameValid = /^[a-zA-Z0-9_-]{1,100}$/.test(newName)
+  const renameValid = namePattern.test(newName)
 
   async function handleRename() {
     if (!renameValid) return

@@ -19,8 +19,6 @@ import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 
-private val namePattern = Regex("^[a-zA-Z0-9_-]{1,100}$")
-
 private val groupName = Path.of("group")
 private val newName = Query.required("name")
 private val groupListBody = autoBody<List<String>>().toLens()
