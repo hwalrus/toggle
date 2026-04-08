@@ -1,25 +1,18 @@
 import { useState } from 'react'
 import { Toggle, enable, disable, remove } from '../api.ts'
+import { useAsyncAction } from '../hooks/useAsyncAction.ts'
 
 type Props = { toggle: Toggle; onChanged: () => void }
 
 export default function ToggleRow({ toggle, onChanged }: Props) {
-  const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { busy, error, run } = useAsyncAction()
 
   async function handleToggle() {
-    setBusy(true)
-    setError(null)
-    try {
-      if (toggle.enabled) await disable(toggle.group, toggle.name)
-      else await enable(toggle.group, toggle.name)
-      onChanged()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed')
-    } finally {
-      setBusy(false)
-    }
+    const ok = await run(
+      () => toggle.enabled ? disable(toggle.group, toggle.name) : enable(toggle.group, toggle.name)
+    )
+    if (ok) onChanged()
   }
 
   async function handleDelete() {
@@ -27,17 +20,9 @@ export default function ToggleRow({ toggle, onChanged }: Props) {
       setConfirmDelete(true)
       return
     }
-    setBusy(true)
-    setError(null)
-    try {
-      await remove(toggle.group, toggle.name)
-      onChanged()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed')
-    } finally {
-      setBusy(false)
-      setConfirmDelete(false)
-    }
+    const ok = await run(() => remove(toggle.group, toggle.name))
+    setConfirmDelete(false)
+    if (ok) onChanged()
   }
 
   return (

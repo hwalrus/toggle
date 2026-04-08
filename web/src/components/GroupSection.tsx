@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Toggle, renameGroup, deleteGroup, namePattern } from '../api.ts'
 import AddToggleForm from './AddToggleForm.tsx'
 import ToggleList from './ToggleList.tsx'
+import { useAsyncAction } from '../hooks/useAsyncAction.ts'
 
 type Props = {
   group: string
@@ -15,36 +16,25 @@ export default function GroupSection({ group, toggles, loading, onGroupChanged, 
   const [renaming, setRenaming] = useState(false)
   const [newName, setNewName] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { busy, error, run } = useAsyncAction()
 
   const renameValid = namePattern.test(newName)
 
   async function handleRename() {
     if (!renameValid) return
-    setBusy(true)
-    setError(null)
-    try {
-      await renameGroup(group, newName)
+    const ok = await run(() => renameGroup(group, newName), 'Failed to rename group')
+    if (ok) {
       setRenaming(false)
       setNewName('')
       onGroupChanged()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rename group')
-    } finally {
-      setBusy(false)
     }
   }
 
   async function handleDelete() {
-    setBusy(true)
-    setError(null)
-    try {
-      await deleteGroup(group)
+    const ok = await run(() => deleteGroup(group), 'Failed to delete group')
+    if (ok) {
       onGroupChanged()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete group')
-      setBusy(false)
+    } else {
       setConfirmDelete(false)
     }
   }
