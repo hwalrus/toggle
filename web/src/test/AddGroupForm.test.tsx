@@ -48,6 +48,16 @@ describe('AddGroupForm', () => {
     expect(onCreated).toHaveBeenCalledTimes(1)
   })
 
+  it('disables input and button while submitting', async () => {
+    vi.mocked(api.createGroup).mockReturnValue(new Promise(() => {}))
+    const user = userEvent.setup()
+    render(<AddGroupForm onCreated={vi.fn()} />)
+    await user.type(screen.getByPlaceholderText('group-name'), 'payments')
+    await user.click(screen.getByRole('button', { name: /add group/i }))
+    expect(screen.getByPlaceholderText('group-name')).toBeDisabled()
+    expect(screen.getByRole('button', { name: /add group/i })).toBeDisabled()
+  })
+
   it('clears the input after successful submission', async () => {
     const user = userEvent.setup()
     render(<AddGroupForm onCreated={vi.fn()} />)

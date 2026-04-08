@@ -3,6 +3,7 @@ package io.hwalrus.toggle
 sealed class StoreResult {
     data object Success : StoreResult()
     data object NotFound : StoreResult()
+    data object AlreadyExists : StoreResult()
 }
 
 sealed class GroupResult {

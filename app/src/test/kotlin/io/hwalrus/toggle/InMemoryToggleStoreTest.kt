@@ -44,6 +44,23 @@ class InMemoryToggleStoreTest : DescribeSpec({
                 store.get("new", "feat") shouldBe GetResult.Found(true)
                 store.get("old", "feat") shouldBe GetResult.NotFound
             }
+
+            it("returns AlreadyExists when the target name is already taken") {
+                val store = InMemoryToggleStore()
+                store.addGroup("a")
+                store.addGroup("b")
+                store.add("b", "existing-toggle", true)
+                store.renameGroup("a", "b") shouldBe StoreResult.AlreadyExists
+                store.getGroups() shouldBe listOf("a", "b")
+                store.get("b", "existing-toggle") shouldBe GetResult.Found(true)
+            }
+
+            it("renaming a group to its own name is a no-op success") {
+                val store = InMemoryToggleStore()
+                store.addGroup("a")
+                store.renameGroup("a", "a") shouldBe StoreResult.Success
+                store.getGroups() shouldBe listOf("a")
+            }
         }
 
         describe("deleteGroup") {

@@ -74,6 +74,14 @@ class AppTest : DescribeSpec({
             handler(Request(POST, "/group/mygroup"))
             handler(Request(POST, "/group/mygroup/rename?name=bad name")).status shouldBe BAD_REQUEST
         }
+
+        it("returns 409 when the target name is already taken") {
+            val handler = app()
+            handler(Request(POST, "/group/a"))
+            handler(Request(POST, "/group/b"))
+            handler(Request(POST, "/group/a/rename?name=b")).status shouldBe CONFLICT
+            Jackson.parse(handler(Request(GET, "/group")).bodyString()) shouldBe Jackson.parse("""["a","b"]""")
+        }
     }
 
     describe("DELETE /group/{group}") {

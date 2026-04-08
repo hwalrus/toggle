@@ -58,6 +58,16 @@ describe('AddToggleForm', () => {
     expect(input).toHaveValue('')
   })
 
+  it('resets enabled checkbox to true after successful submission', async () => {
+    const user = userEvent.setup()
+    render(<AddToggleForm group="g" onCreated={vi.fn()} />)
+    await user.type(screen.getByPlaceholderText('toggle-name'), 'my-flag')
+    await user.click(screen.getByRole('checkbox', { name: /enabled/i }))
+    expect(screen.getByRole('checkbox', { name: /enabled/i })).not.toBeChecked()
+    await user.click(screen.getByRole('button', { name: /add/i }))
+    expect(screen.getByRole('checkbox', { name: /enabled/i })).toBeChecked()
+  })
+
   it('submitting with checkbox unchecked calls create(group, name, false)', async () => {
     const user = userEvent.setup()
     render(<AddToggleForm group="g" onCreated={vi.fn()} />)

@@ -31,6 +31,7 @@ private val toggleStateBody = autoBody<ToggleState>().toLens()
 internal fun StoreResult.toResponse() = when (this) {
     StoreResult.Success -> Response(OK)
     StoreResult.NotFound -> Response(NOT_FOUND)
+    StoreResult.AlreadyExists -> Response(CONFLICT)
 }
 
 private fun ToggleResult.toResponse(group: String, name: String) = when (this) {

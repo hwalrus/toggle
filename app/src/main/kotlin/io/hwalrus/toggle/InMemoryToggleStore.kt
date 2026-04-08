@@ -17,6 +17,7 @@ class InMemoryToggleStore : ToggleStore {
         while (true) {
             val current = store.get()
             if (group !in current) return StoreResult.NotFound
+            if (newName in current && newName != group) return StoreResult.AlreadyExists
             if (store.compareAndSet(current, (current - group) + (newName to current.getValue(group)))) return StoreResult.Success
         }
     }

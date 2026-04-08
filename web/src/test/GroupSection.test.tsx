@@ -92,4 +92,35 @@ describe('GroupSection', () => {
     expect(api.deleteGroup).toHaveBeenCalledWith('payments')
     expect(onGroupChanged).toHaveBeenCalledTimes(1)
   })
+
+  it('shows an error when renameGroup rejects', async () => {
+    vi.mocked(api.renameGroup).mockRejectedValue(new Error('Failed to rename group: 500'))
+    const user = userEvent.setup()
+    render(<GroupSection group="payments" toggles={[]} loading={false} onGroupChanged={vi.fn()} onToggleChanged={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: /rename/i }))
+    const input = screen.getByLabelText('New group name')
+    await user.clear(input)
+    await user.type(input, 'billing')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
+
+  it('shows an error when deleteGroup rejects', async () => {
+    vi.mocked(api.deleteGroup).mockRejectedValue(new Error('Failed to delete group: 500'))
+    const user = userEvent.setup()
+    render(<GroupSection group="payments" toggles={[]} loading={false} onGroupChanged={vi.fn()} onToggleChanged={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: /^delete$/i }))
+    await user.click(screen.getByRole('button', { name: /yes/i }))
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
+
+  it('disables action buttons while an operation is in flight', async () => {
+    vi.mocked(api.deleteGroup).mockReturnValue(new Promise(() => {}))
+    const user = userEvent.setup()
+    render(<GroupSection group="payments" toggles={[]} loading={false} onGroupChanged={vi.fn()} onToggleChanged={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: /^delete$/i }))
+    await user.click(screen.getByRole('button', { name: /yes/i }))
+    expect(screen.getByRole('button', { name: /yes/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /no/i })).toBeDisabled()
+  })
 })
