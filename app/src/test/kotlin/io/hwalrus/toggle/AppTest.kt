@@ -185,12 +185,11 @@ class AppTest : DescribeSpec({
             Jackson.parse(response.bodyString()) shouldBe Jackson.parse("""{"enabled":true}""")
         }
 
-        it("overwriting a toggle reflects the latest value") {
+        it("returns 409 Conflict when toggle name already exists in the group") {
             val handler = app()
             handler(Request(POST, "/group/g"))
             handler(Request(POST, "/group/g/toggle/myFeature?enabled=true"))
-            handler(Request(POST, "/group/g/toggle/myFeature?enabled=false"))
-            Jackson.parse(handler(Request(GET, "/group/g/toggle/myFeature")).bodyString()) shouldBe Jackson.parse("""{"enabled":false}""")
+            handler(Request(POST, "/group/g/toggle/myFeature?enabled=false")).status shouldBe CONFLICT
         }
     }
 

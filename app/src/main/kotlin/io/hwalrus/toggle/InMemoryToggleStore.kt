@@ -31,11 +31,13 @@ class InMemoryToggleStore : ToggleStore {
 
     override fun getGroups(): List<String> = store.get().keys.sorted()
 
-    override fun add(group: String, name: String, enabled: Boolean): StoreResult {
+    override fun add(group: String, name: String, enabled: Boolean): ToggleResult {
         while (true) {
             val current = store.get()
-            if (group !in current) return StoreResult.NotFound
-            if (store.compareAndSet(current, current + (group to (current.getValue(group) + (name to enabled))))) return StoreResult.Success
+            if (group !in current) return ToggleResult.GroupNotFound
+            val toggles = current.getValue(group)
+            if (name in toggles) return ToggleResult.AlreadyExists
+            if (store.compareAndSet(current, current + (group to (toggles + (name to enabled))))) return ToggleResult.Created
         }
     }
 

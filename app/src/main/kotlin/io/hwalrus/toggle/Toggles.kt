@@ -5,6 +5,7 @@ import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.CONFLICT
 import org.http4k.core.Status.Companion.CREATED
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
@@ -32,6 +33,12 @@ internal fun StoreResult.toResponse() = when (this) {
     StoreResult.NotFound -> Response(NOT_FOUND)
 }
 
+private fun ToggleResult.toResponse(group: String, name: String) = when (this) {
+    ToggleResult.Created -> Response(CREATED).with(LOCATION of Uri.of("/group/$group/toggle/$name"))
+    ToggleResult.AlreadyExists -> Response(CONFLICT)
+    ToggleResult.GroupNotFound -> Response(NOT_FOUND)
+}
+
 fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
     "" bind GET to { req ->
         val group = groupName(req)
@@ -42,10 +49,7 @@ fun toggleRoutes(store: ToggleStore): RoutingHttpHandler = routes(
         val group = groupName(req)
         val name = toggleName(req)
         if (!namePattern.matches(name)) return@to Response(BAD_REQUEST)
-        when (store.add(group, name, toggleEnabled(req))) {
-            StoreResult.Success -> Response(CREATED).with(LOCATION of Uri.of("/group/$group/toggle/$name"))
-            StoreResult.NotFound -> Response(NOT_FOUND)
-        }
+        store.add(group, name, toggleEnabled(req)).toResponse(group, name)
     },
     "/{name}" bind GET to { req ->
         when (val result = store.get(groupName(req), toggleName(req))) {

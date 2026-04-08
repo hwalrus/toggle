@@ -10,6 +10,12 @@ sealed class GroupResult {
     data object AlreadyExists : GroupResult()
 }
 
+sealed class ToggleResult {
+    data object Created : ToggleResult()
+    data object AlreadyExists : ToggleResult()
+    data object GroupNotFound : ToggleResult()
+}
+
 sealed class GetResult {
     data class Found(val enabled: Boolean) : GetResult()
     data object NotFound : GetResult()
@@ -23,7 +29,7 @@ interface ToggleStore {
     fun getGroups(): List<String>
 
     // Toggle operations (all scoped by group)
-    fun add(group: String, name: String, enabled: Boolean): StoreResult
+    fun add(group: String, name: String, enabled: Boolean): ToggleResult
     fun get(group: String, name: String): GetResult
     fun getAll(group: String): Map<String, Boolean>?   // null if group does not exist
     fun enable(group: String, name: String): StoreResult

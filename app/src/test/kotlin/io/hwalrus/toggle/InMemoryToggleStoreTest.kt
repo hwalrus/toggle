@@ -126,14 +126,14 @@ class InMemoryToggleStoreTest : DescribeSpec({
         }
 
         describe("add") {
-            it("returns NotFound when the group does not exist") {
-                InMemoryToggleStore().add("unknown", "feat", true) shouldBe StoreResult.NotFound
+            it("returns GroupNotFound when the group does not exist") {
+                InMemoryToggleStore().add("unknown", "feat", true) shouldBe ToggleResult.GroupNotFound
             }
 
-            it("adds a toggle and returns Success") {
+            it("adds a toggle and returns Created") {
                 val store = InMemoryToggleStore()
                 store.addGroup("g")
-                store.add("g", "feat", true) shouldBe StoreResult.Success
+                store.add("g", "feat", true) shouldBe ToggleResult.Created
                 store.get("g", "feat") shouldBe GetResult.Found(true)
             }
 
@@ -147,12 +147,12 @@ class InMemoryToggleStoreTest : DescribeSpec({
                 store.get("g2", "feat") shouldBe GetResult.Found(false)
             }
 
-            it("overwrites an existing toggle") {
+            it("returns AlreadyExists when toggle name is taken in the group") {
                 val store = InMemoryToggleStore()
                 store.addGroup("g")
                 store.add("g", "feat", true)
-                store.add("g", "feat", false)
-                store.get("g", "feat") shouldBe GetResult.Found(false)
+                store.add("g", "feat", false) shouldBe ToggleResult.AlreadyExists
+                store.get("g", "feat") shouldBe GetResult.Found(true)
             }
         }
 
