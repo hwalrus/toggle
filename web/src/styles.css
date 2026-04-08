@@ -17,6 +17,8 @@
   --radius-lg: 10px;
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
   --transition: 0.15s ease;
+  --header-h: 56px;
+  --jump-bar-h: 44px;
 }
 
 *, *::before, *::after {
@@ -57,10 +59,13 @@ body {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   padding: 0 24px;
-  height: 56px;
+  height: var(--header-h);
   display: flex;
   align-items: center;
   box-shadow: var(--shadow);
@@ -366,14 +371,66 @@ body {
   font-weight: 500;
 }
 
+/* Jump bar */
+
+.jump-bar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 20;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px;
+  height: var(--jump-bar-h);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.jump-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.jump-bar-link {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+
+.jump-bar-link:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.jump-bar-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* Group section */
 
 .group-section {
   padding: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .group-header {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -381,6 +438,10 @@ body {
   padding: 14px 24px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
+}
+
+.has-jump-bar .group-header {
+  top: calc(var(--header-h) + var(--jump-bar-h));
 }
 
 .group-title {

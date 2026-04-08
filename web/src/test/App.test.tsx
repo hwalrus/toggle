@@ -39,8 +39,9 @@ describe('App', () => {
 
   it('shows group names as section headers', async () => {
     render(<App />)
-    expect(await screen.findByText('alpha')).toBeInTheDocument()
-    expect(screen.getByText('beta')).toBeInTheDocument()
+    // group names appear in both the jump bar and the group header
+    expect(await screen.findAllByText('alpha')).not.toHaveLength(0)
+    expect(screen.getAllByText('beta')).not.toHaveLength(0)
   })
 
   it('shows error banner when getGroups fails', async () => {
@@ -77,11 +78,11 @@ describe('App', () => {
     vi.mocked(api.getToggles).mockResolvedValue([])
     const user = userEvent.setup()
     render(<App />)
-    await screen.findByText('alpha')
+    await screen.findAllByText('alpha')
     await user.type(screen.getByPlaceholderText('group-name'), 'gamma')
     await user.click(screen.getByRole('button', { name: /add group/i }))
     expect(api.createGroup).toHaveBeenCalledWith('gamma')
     expect(api.getGroups).toHaveBeenCalledTimes(2)
-    expect(await screen.findByText('gamma')).toBeInTheDocument()
+    expect(await screen.findAllByText('gamma')).not.toHaveLength(0)
   })
 })

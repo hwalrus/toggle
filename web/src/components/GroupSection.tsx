@@ -5,6 +5,7 @@ import ToggleList from './ToggleList.tsx'
 import { useAsyncAction } from '../hooks/useAsyncAction.ts'
 
 type Props = {
+  id?: string
   group: string
   toggles: Toggle[]
   loading: boolean
@@ -12,7 +13,7 @@ type Props = {
   onToggleChanged: () => void
 }
 
-export default function GroupSection({ group, toggles, loading, onGroupChanged, onToggleChanged }: Props) {
+export default function GroupSection({ id, group, toggles, loading, onGroupChanged, onToggleChanged }: Props) {
   const [renaming, setRenaming] = useState(false)
   const [newName, setNewName] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -40,7 +41,7 @@ export default function GroupSection({ group, toggles, loading, onGroupChanged, 
   }
 
   return (
-    <div className="card group-section">
+    <div id={id} className="card group-section">
       <div className="group-header">
         {renaming ? (
           <div className="group-rename-row">

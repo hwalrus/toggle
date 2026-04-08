@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getGroups, getToggles, Toggle } from './api.ts'
 import AddGroupForm from './components/AddGroupForm.tsx'
 import GroupSection from './components/GroupSection.tsx'
+import JumpBar from './components/JumpBar.tsx'
 
 export default function App() {
   const [groups, setGroups] = useState<string[]>([])
@@ -27,11 +28,14 @@ export default function App() {
 
   useEffect(() => { refresh() }, [refresh])
 
+  const hasJumpBar = groups.length > 1
+
   return (
-    <div className="page">
+    <div className={hasJumpBar ? 'page has-jump-bar' : 'page'}>
       <header className="header">
         <h1>Feature Toggles</h1>
       </header>
+      {hasJumpBar && <JumpBar groups={groups} />}
       <main className="main">
         <div className="card">
           <AddGroupForm onCreated={refresh} />
@@ -46,6 +50,7 @@ export default function App() {
         {groups.map(group => (
           <GroupSection
             key={group}
+            id={`group-${group}`}
             group={group}
             toggles={togglesByGroup[group] ?? []}
             loading={loading}
