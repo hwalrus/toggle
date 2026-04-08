@@ -1,4 +1,4 @@
-import { getGroups, createGroup, renameGroup, deleteGroup, getToggles, create, enable, disable, remove } from '../api.ts'
+import { getGroups, createGroup, renameGroup, deleteGroup, getToggles, create, enable, disable, remove, ApiError } from '../api.ts'
 
 function mockFetch(ok: boolean, body?: unknown, status = 200) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -25,9 +25,11 @@ describe('getGroups', () => {
     expect(await getGroups()).toEqual([])
   })
 
-  it('throws with status code when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 500)
-    await expect(getGroups()).rejects.toThrow('500')
+    const err = await getGroups().catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(500)
   })
 })
 
@@ -45,9 +47,11 @@ describe('createGroup', () => {
     expect(url).toContain('my%20group')
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 409)
-    await expect(createGroup('x')).rejects.toThrow('409')
+    const err = await createGroup('x').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(409)
   })
 })
 
@@ -66,9 +70,11 @@ describe('renameGroup', () => {
     expect(url).toContain('new%20name')
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(renameGroup('x', 'y')).rejects.toThrow('404')
+    const err = await renameGroup('x', 'y').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
   })
 })
 
@@ -79,9 +85,11 @@ describe('deleteGroup', () => {
     expect(fetch).toHaveBeenCalledWith('/group/payments', { method: 'DELETE' })
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(deleteGroup('x')).rejects.toThrow('404')
+    const err = await deleteGroup('x').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
   })
 })
 
@@ -101,9 +109,11 @@ describe('getToggles', () => {
     expect(await getToggles('g')).toEqual([])
   })
 
-  it('throws with status code when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(getToggles('x')).rejects.toThrow('404')
+    const err = await getToggles('x').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
   })
 })
 
@@ -125,9 +135,11 @@ describe('create', () => {
     expect(url).toContain('my%20flag')
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 400)
-    await expect(create('g', 'x', true)).rejects.toThrow('400')
+    const err = await create('g', 'x', true).catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(400)
   })
 })
 
@@ -138,9 +150,11 @@ describe('enable', () => {
     expect(fetch).toHaveBeenCalledWith('/group/payments/toggle/checkout/enable', { method: 'POST' })
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(enable('g', 'x')).rejects.toThrow('404')
+    const err = await enable('g', 'x').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
   })
 })
 
@@ -151,9 +165,11 @@ describe('disable', () => {
     expect(fetch).toHaveBeenCalledWith('/group/payments/toggle/checkout/disable', { method: 'POST' })
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(disable('g', 'x')).rejects.toThrow('404')
+    const err = await disable('g', 'x').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
   })
 })
 
@@ -164,8 +180,10 @@ describe('remove', () => {
     expect(fetch).toHaveBeenCalledWith('/group/payments/toggle/checkout', { method: 'DELETE' })
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws ApiError with status code when response is not ok', async () => {
     mockFetch(false, undefined, 404)
-    await expect(remove('g', 'x')).rejects.toThrow('404')
+    const err = await remove('g', 'x').catch(e => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
   })
 })

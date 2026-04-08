@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as api from '../api.ts'
+import { ApiError } from '../api.ts'
 import AddToggleForm from '../components/AddToggleForm.tsx'
 
-vi.mock('../api.ts')
+vi.mock('../api.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api.ts')>()
+  return { ...actual, create: vi.fn() }
+})
 
 beforeEach(() => {
   vi.mocked(api.create).mockResolvedValue(undefined)
@@ -74,12 +78,21 @@ describe('AddToggleForm', () => {
     expect(screen.getByRole('button', { name: /add/i })).toBeDisabled()
   })
 
-  it('shows field error when create rejects', async () => {
-    vi.mocked(api.create).mockRejectedValue(new Error('Failed to create toggle: 400'))
+  it('shows a conflict message when the toggle name is already taken', async () => {
+    vi.mocked(api.create).mockRejectedValue(new ApiError(409, 'Failed to create toggle: 409'))
     const user = userEvent.setup()
     render(<AddToggleForm group="g" onCreated={vi.fn()} />)
     await user.type(screen.getByPlaceholderText('toggle-name'), 'my-flag')
     await user.click(screen.getByRole('button', { name: /add/i }))
-    expect(screen.getByText(/400/)).toBeInTheDocument()
+    expect(screen.getByText(/already exists/i)).toBeInTheDocument()
+  })
+
+  it('shows a generic error for non-conflict failures', async () => {
+    vi.mocked(api.create).mockRejectedValue(new ApiError(500, 'Failed to create toggle: 500'))
+    const user = userEvent.setup()
+    render(<AddToggleForm group="g" onCreated={vi.fn()} />)
+    await user.type(screen.getByPlaceholderText('toggle-name'), 'my-flag')
+    await user.click(screen.getByRole('button', { name: /add/i }))
+    expect(screen.getByText(/failed to create toggle/i)).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react'
-import { createGroup, namePattern } from '../api.ts'
+import { createGroup, namePattern, ApiError } from '../api.ts'
 
 type Props = { onCreated: () => void }
 
@@ -20,7 +20,7 @@ export default function AddGroupForm({ onCreated }: Props) {
       setName('')
       onCreated()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create group')
+      setError(err instanceof ApiError && err.status === 409 ? 'A group with this name already exists' : 'Failed to create group')
     } finally {
       setSubmitting(false)
     }

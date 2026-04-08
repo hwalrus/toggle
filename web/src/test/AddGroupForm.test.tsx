@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as api from '../api.ts'
+import { ApiError } from '../api.ts'
 import AddGroupForm from '../components/AddGroupForm.tsx'
 
-vi.mock('../api.ts')
+vi.mock('../api.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api.ts')>()
+  return { ...actual, createGroup: vi.fn() }
+})
 
 beforeEach(() => {
   vi.mocked(api.createGroup).mockResolvedValue(undefined)
@@ -53,14 +57,23 @@ describe('AddGroupForm', () => {
     expect(input).toHaveValue('')
   })
 
-  it('shows error and does not call onCreated when createGroup rejects', async () => {
-    vi.mocked(api.createGroup).mockRejectedValue(new Error('Failed to create group: 409'))
+  it('shows a conflict message when the group name is already taken', async () => {
+    vi.mocked(api.createGroup).mockRejectedValue(new ApiError(409, 'Failed to create group: 409'))
     const user = userEvent.setup()
     const onCreated = vi.fn()
     render(<AddGroupForm onCreated={onCreated} />)
     await user.type(screen.getByPlaceholderText('group-name'), 'existing')
     await user.click(screen.getByRole('button', { name: /add group/i }))
-    expect(screen.getByText(/409/)).toBeInTheDocument()
+    expect(screen.getByText(/already exists/i)).toBeInTheDocument()
     expect(onCreated).not.toHaveBeenCalled()
+  })
+
+  it('shows a generic error for non-conflict failures', async () => {
+    vi.mocked(api.createGroup).mockRejectedValue(new ApiError(500, 'Failed to create group: 500'))
+    const user = userEvent.setup()
+    render(<AddGroupForm onCreated={vi.fn()} />)
+    await user.type(screen.getByPlaceholderText('group-name'), 'g')
+    await user.click(screen.getByRole('button', { name: /add group/i }))
+    expect(screen.getByText(/failed to create group/i)).toBeInTheDocument()
   })
 })

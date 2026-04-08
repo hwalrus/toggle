@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react'
-import { create, namePattern } from '../api.ts'
+import { create, namePattern, ApiError } from '../api.ts'
 
 type Props = { group: string; onCreated: () => void }
 
@@ -22,7 +22,7 @@ export default function AddToggleForm({ group, onCreated }: Props) {
       setEnabled(true)
       onCreated()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create toggle')
+      setError(err instanceof ApiError && err.status === 409 ? 'A toggle with this name already exists in this group' : 'Failed to create toggle')
     } finally {
       setSubmitting(false)
     }
