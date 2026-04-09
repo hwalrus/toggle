@@ -1,10 +1,9 @@
 package io.hwalrus.toggle
 
 import io.kotest.core.spec.style.DescribeSpec
-import org.testcontainers.containers.MongoDBContainer
-import org.testcontainers.utility.DockerImageName
+import org.testcontainers.mongodb.MongoDBContainer
 
 class MongoToggleStoreTest : DescribeSpec({
-    val container = autoClose(MongoDBContainer(DockerImageName.parse("mongo:8")).also { it.start() })
+    val container = autoClose(MongoDBContainer("mongo:8").also { it.start() })
     toggleStoreContract(MongoToggleStore(container.connectionString))
 })
