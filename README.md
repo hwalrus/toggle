@@ -150,6 +150,7 @@ Three layers of backend tests are in place:
 |---|---|---|
 | `InMemoryToggleStoreTest` | Unit | Store contract — groups and toggle operations |
 | `AppTest` | Unit | HTTP routes — status codes, JSON responses, headers, CORS, security headers |
+| `AppConfigTest` | Unit | HOCON config files — port defaults, allowed-origin resolution per environment |
 | `ToggleEndToEndTest` | E2E | Full stack — real Netty server, real HTTP via OkHttp |
 
 ## Web UI
@@ -239,7 +240,8 @@ docker run -p 10800:10800 toggle
 
 | Variable | Default | Description |
 |---|---|---|
-| `ALLOWED_ORIGIN` | *(unset)* | Restricts CORS to a single origin (e.g. `https://my-app.example.com`). When unset, all origins are permitted (suitable for local use only). |
+| `APP_ENV` | `local` | Selects the HOCON config file to load (`application-{APP_ENV}.conf`). Use `production` for deployed environments. |
+| `ALLOWED_ORIGIN` | *(unset)* | Restricts CORS to a single origin (e.g. `https://my-app.example.com`). Read from `application-production.conf` via `${?ALLOWED_ORIGIN}`. When unset, all origins are permitted (suitable for local use only). |
 
 ### Inspect the image
 
@@ -254,6 +256,7 @@ docker history toggle     # inspect layers
 |---|---|
 | HTTP server | [http4k](https://www.http4k.org/) + Netty |
 | JSON | Jackson (via http4k-format-jackson) |
+| Configuration | [Lightbend Config](https://github.com/lightbend/config) (HOCON) |
 | Unit/integration tests | [Kotest](https://kotest.io/) |
 | E2E HTTP client | [OkHttp](https://square.github.io/okhttp/) |
 | Build | Gradle 9.4.1 with version catalog |
