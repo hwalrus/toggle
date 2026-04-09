@@ -108,6 +108,49 @@ Deletes an existing toggle. Returns `404` if the toggle does not exist.
 
 ---
 
+## Data storage
+
+The app supports two storage backends, selected via the `APP_ENV` config profile.
+
+### In-memory (default)
+
+The default (`APP_ENV=local`) stores all data in a `ConcurrentHashMap`-style `AtomicReference`. Data is lost on restart. No external dependencies required.
+
+### MongoDB
+
+Set `APP_ENV=production` and provide a MongoDB connection URI:
+
+```bash
+APP_ENV=production MONGODB_URI=mongodb://localhost:27017 ./gradlew run
+```
+
+Or with Docker Compose, pass the variable through the environment:
+
+```yaml
+environment:
+  APP_ENV: production
+  MONGODB_URI: mongodb://mongo:27017
+  ALLOWED_ORIGIN: https://my-app.example.com
+```
+
+**Collection:** `toggles` in the `toggle` database.
+
+**Document schema** — one document per group:
+
+```json
+{
+  "_id": "payments",
+  "toggles": {
+    "dark-mode": true,
+    "new-checkout": false
+  }
+}
+```
+
+Group names map to `_id`; toggle names are keys inside the `toggles` subdocument.
+
+---
+
 ## Requirements
 
 - JDK 25
@@ -148,7 +191,8 @@ Three layers of backend tests are in place:
 
 | Test class | Type | What it covers |
 |---|---|---|
-| `InMemoryToggleStoreTest` | Unit | Store contract — groups and toggle operations |
+| `InMemoryToggleStoreTest` | Unit | Store contract — groups and toggle operations (in-memory) |
+| `MongoToggleStoreTest` | Integration | Store contract — same assertions against a real MongoDB via Testcontainers |
 | `AppTest` | Unit | HTTP routes — status codes, JSON responses, headers, CORS, security headers |
 | `AppConfigTest` | Unit | HOCON config files — port defaults, allowed-origin resolution per environment |
 | `ToggleEndToEndTest` | E2E | Full stack — real Netty server, real HTTP via OkHttp |
@@ -240,8 +284,9 @@ docker run -p 10800:10800 toggle
 
 | Variable | Default | Description |
 |---|---|---|
-| `APP_ENV` | `local` | Selects the HOCON config file to load (`application-{APP_ENV}.conf`). Use `production` for deployed environments. |
-| `ALLOWED_ORIGIN` | *(unset)* | Restricts CORS to a single origin (e.g. `https://my-app.example.com`). Read from `application-production.conf` via `${?ALLOWED_ORIGIN}`. When unset, all origins are permitted (suitable for local use only). |
+| `APP_ENV` | `local` | Selects the HOCON config file (`application-{APP_ENV}.conf`). Use `production` for deployed environments. |
+| `MONGODB_URI` | *(unset)* | MongoDB connection string. Required when `APP_ENV=production`. Example: `mongodb://localhost:27017`. |
+| `ALLOWED_ORIGIN` | *(unset)* | Restricts CORS to a single origin (e.g. `https://my-app.example.com`). When unset, all origins are permitted (local use only). |
 
 ### Inspect the image
 
@@ -257,6 +302,7 @@ docker history toggle     # inspect layers
 | HTTP server | [http4k](https://www.http4k.org/) + Netty |
 | JSON | Jackson (via http4k-format-jackson) |
 | Configuration | [Lightbend Config](https://github.com/lightbend/config) (HOCON) |
+| Database | [MongoDB Kotlin sync driver](https://www.mongodb.com/docs/drivers/kotlin/coroutine/current/) |
 | Unit/integration tests | [Kotest](https://kotest.io/) |
 | E2E HTTP client | [OkHttp](https://square.github.io/okhttp/) |
 | Build | Gradle 9.4.1 with version catalog |
