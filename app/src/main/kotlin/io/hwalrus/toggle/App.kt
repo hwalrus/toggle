@@ -29,7 +29,7 @@ private val securityHeaders = Filter { next ->
 
 fun app(
     store: ToggleStore = InMemoryToggleStore(),
-    allowedOrigin: String? = System.getenv("ALLOWED_ORIGIN")
+    allowedOrigin: String? = null
 ): HttpHandler {
     val corsPolicy = if (!allowedOrigin.isNullOrBlank()) {
         CorsPolicy(OriginPolicy.Only(allowedOrigin), listOf("content-type"), listOf(GET, POST, DELETE))
@@ -48,6 +48,6 @@ fun app(
 }
 
 fun main() {
-    val server = app().asServer(Netty(10800)).start()
+    val server = app(allowedOrigin = AppConfig.allowedOrigin).asServer(Netty(AppConfig.port)).start()
     Runtime.getRuntime().addShutdownHook(Thread { server.stop() })
 }
