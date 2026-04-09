@@ -20,10 +20,12 @@ dependencies {
     implementation(libs.http4k.core)
     implementation(libs.http4k.format.jackson)
     implementation(libs.http4k.server.netty)
+    implementation(libs.mongodb.kotlin.sync)
     implementation(libs.typesafe.config)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.testcontainers.mongodb)
 
     e2eTestImplementation(libs.kotest.runner.junit5)
     e2eTestImplementation(libs.kotest.assertions.core)

@@ -48,6 +48,10 @@ fun app(
 }
 
 fun main() {
-    val server = app(allowedOrigin = AppConfig.allowedOrigin).asServer(Netty(AppConfig.port)).start()
+    val store = when (AppConfig.store) {
+        "mongodb" -> MongoToggleStore(checkNotNull(AppConfig.mongoUri) { "MONGODB_URI is required when store=mongodb" })
+        else -> InMemoryToggleStore()
+    }
+    val server = app(store = store, allowedOrigin = AppConfig.allowedOrigin).asServer(Netty(AppConfig.port)).start()
     Runtime.getRuntime().addShutdownHook(Thread { server.stop() })
 }
