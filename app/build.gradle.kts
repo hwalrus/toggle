@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.http4k.server.netty)
     implementation(libs.mongodb.kotlin.sync)
     implementation(libs.typesafe.config)
+    runtimeOnly(libs.slf4j.simple)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
