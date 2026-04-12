@@ -4,6 +4,9 @@ services:
     ports:
       - "10800:10800"
     restart: unless-stopped
+    environment:
+      APP_ENV: production
+      MONGODB_URI: mongodb://host.docker.internal:27017
     deploy:
       resources:
         limits:
