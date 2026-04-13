@@ -93,6 +93,15 @@ describe('GroupSection', () => {
     expect(onGroupChanged).toHaveBeenCalledTimes(1)
   })
 
+  it('dismisses the confirm dialog after a successful delete', async () => {
+    const user = userEvent.setup()
+    render(<GroupSection group="payments" toggles={[]} loading={false} onGroupChanged={vi.fn()} onToggleChanged={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: /^delete$/i }))
+    await user.click(screen.getByRole('button', { name: /yes/i }))
+    expect(screen.queryByRole('button', { name: /yes/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /no/i })).not.toBeInTheDocument()
+  })
+
   it('shows an error when renameGroup rejects', async () => {
     vi.mocked(api.renameGroup).mockRejectedValue(new Error('Failed to rename group: 500'))
     const user = userEvent.setup()

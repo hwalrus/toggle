@@ -33,11 +33,8 @@ export default function GroupSection({ id, group, toggles, loading, onGroupChang
 
   async function handleDelete() {
     const ok = await run(() => deleteGroup(group), 'Failed to delete group')
-    if (ok) {
-      onGroupChanged()
-    } else {
-      setConfirmDelete(false)
-    }
+    setConfirmDelete(false)
+    if (ok) onGroupChanged()
   }
 
   return (
