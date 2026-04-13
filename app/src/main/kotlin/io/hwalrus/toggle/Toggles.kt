@@ -22,7 +22,6 @@ import org.http4k.routing.routes
 
 private data class ToggleState(val enabled: Boolean)
 
-private val groupName = Path.of("group")
 private val toggleName = Path.of("name")
 private val toggleEnabled = Query.boolean().required("enabled")
 private val allTogglesBody = autoBody<Map<String, Boolean>>().toLens()

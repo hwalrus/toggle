@@ -12,7 +12,6 @@ import org.http4k.core.Uri
 import org.http4k.core.with
 import org.http4k.lens.Header.LOCATION
 import org.http4k.format.Jackson.autoBody
-import org.http4k.lens.Path
 import org.http4k.lens.Query
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
@@ -23,7 +22,6 @@ private fun GroupResult.toResponse(group: String) = when (this) {
     GroupResult.AlreadyExists -> Response(CONFLICT)
 }
 
-private val groupName = Path.of("group")
 private val newName = Query.required("name")
 private val groupListBody = autoBody<List<String>>().toLens()
 
