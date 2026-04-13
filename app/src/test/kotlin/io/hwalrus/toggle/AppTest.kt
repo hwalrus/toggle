@@ -59,7 +59,6 @@ class AppTest : DescribeSpec({
         it("renames an existing group") {
             val handler = app()
             handler(Request(POST, "/group/old"))
-            handler(Request(POST, "/group/old?enabled=true"))
             val response = handler(Request(POST, "/group/old/rename?name=new"))
             response.status shouldBe OK
             Jackson.parse(handler(Request(GET, "/group")).bodyString()) shouldBe Jackson.parse("""["new"]""")
